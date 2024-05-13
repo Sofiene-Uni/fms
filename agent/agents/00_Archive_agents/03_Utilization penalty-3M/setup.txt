@@ -1,0 +1,4 @@
+Standby: False 
+Reward: Machine untilization 
+Timesteps : 3000 000
+seed :no

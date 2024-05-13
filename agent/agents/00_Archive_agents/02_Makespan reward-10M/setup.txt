@@ -1,0 +1,4 @@
+Standby: False 
+Reward: makespan option 
+Timesteps : 10 000 000
+seeds : yes 

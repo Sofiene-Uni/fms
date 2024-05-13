@@ -1,0 +1,4 @@
+Standby: False 
+Reward: machine utilization
+Timesteps : 10 000 000
+seeds: 101
