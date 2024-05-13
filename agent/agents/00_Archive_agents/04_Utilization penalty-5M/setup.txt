@@ -1,3 +1,0 @@
-Standby: False 
-Reward: machine utilization
-Timesteps : 5000 000

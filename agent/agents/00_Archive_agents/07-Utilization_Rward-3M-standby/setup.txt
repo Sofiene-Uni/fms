@@ -1,5 +1,0 @@
-Standby: True 
-Reward: machine utilization
-Timesteps : 3 000 000
-seeds: 101
-reward function: nmachine working\total machines  0.1 stand  by penalty
