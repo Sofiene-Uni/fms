@@ -113,7 +113,7 @@ class Simulator(Petri_build):
     def energy(self,action):  
         
         consumption=0
-        busy_machines= ~np.array( [machine.idle for machine in self.machines])
+        busy_machines= np.array( [machine.busy for machine in self.machines])
         consumption =  np.dot(busy_machines , self.machines_powers)
         self.energy_consumption.append(consumption)
         
@@ -132,7 +132,7 @@ class Simulator(Petri_build):
         if action == list (self.action_map.keys())[-1] and self.standby : 
             return -1
         
-        idle_machines = sum(1 for machine in self.machines if  machine.idle) 
+        idle_machines = sum(1 for machine in self.machines if  not machine.busy) 
         penalty_coef=1e3
         x =  idle_machines / self.n_machines
         reward= (1/penalty_coef)**x
@@ -162,8 +162,8 @@ class Simulator(Petri_build):
             machine = self.machines[machine_idx]
             
             color = token.color[1] == machine.color
-            machine = self.machines[machine_idx].idle
-            precedence = self.jobs[job_idx].idle  
+            machine = not self.machines[machine_idx].busy
+            precedence = not self.jobs[job_idx].busy  
             
            # precedence=True                             #  ******* Precedence ignored for multi objectif 
             
@@ -252,8 +252,8 @@ class Simulator(Petri_build):
             allocated = self.transfer_token(self.ready[job_idx], self.machines[machine_idx], self.clock)   
             
             
-            self.jobs[job_idx].idle = False
-            self.machines[machine_idx].idle = False 
+            self.jobs[job_idx].busy = True
+            self.machines[machine_idx].busy = True 
             return selected and allocated
         
         else:
@@ -272,8 +272,8 @@ class Simulator(Petri_build):
                 _, _, elapsed_time = list(token.logging.items())[-1][-1]
                 if  elapsed_time>= token.process_time  :
                     self.transfer_token(machine, self.delivery[machine.color], self.clock)
-                    self.jobs[token.color[0]].idle = True
-                    self.machines[token.color[1]].idle = True 
+                    self.jobs[token.color[0]].busy = False
+                    self.machines[token.color[1]].busy = False 
                     fired = True
                     
         self.time_tick()          

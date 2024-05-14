@@ -105,7 +105,7 @@ class Simulator(Petri_build):
             float: Calculated reward.
         """
                 
-        idle_machines = sum(1 for machine in self.machines if machine.enabled)
+        idle_machines = sum(1 for machine in self.machines if machine.busy)
         x = - (idle_machines / self.n_machines)
         return x
 
@@ -135,8 +135,8 @@ class Simulator(Petri_build):
             machine = self.machines[machine_idx]
             
             color = token.color[1] == machine.color
-            machine = self.machines[machine_idx].enabled
-            precedence = self.jobs[job_idx].enabled  
+            machine = not self.machines[machine_idx].busy
+            precedence = not  self.jobs[job_idx].busy  
             
             if color and machine and precedence:
                 valid= True
@@ -217,8 +217,8 @@ class Simulator(Petri_build):
             selected= self.transfer_token(self.jobs[job_idx], self.ready[job_idx], self.clock)    
             allocated = self.transfer_token(self.ready[job_idx], self.machines[machine_idx], self.clock)   
             
-            self.jobs[job_idx].enabled = False
-            self.machines[machine_idx].enabled = False 
+            self.jobs[job_idx].busy = True
+            self.machines[machine_idx].busy = True 
             return selected and allocated
         
         else:
@@ -237,8 +237,8 @@ class Simulator(Petri_build):
                 _, _, elapsed_time = list(token.logging.items())[-1][-1]
                 if  elapsed_time> token.process_time  :
                     self.transfer_token(machine, self.delivery[machine.color], self.clock)
-                    self.jobs[token.color[0]].enabled = True
-                    self.machines[token.color[1]].enabled = True 
+                    self.jobs[token.color[0]].busy = False
+                    self.machines[token.color[1]].busy = False 
                     fired = True
                     
         self.time_tick()          

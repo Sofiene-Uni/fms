@@ -3,7 +3,7 @@ from gymnasium import Env
 from gymnasium import spaces
 
 from jsspetri.envs.fms.simulator import Simulator
-from jsspetri.render.plot_fms import plot_solution
+from jsspetri.render.plot_fms import plot_solution, plot_job
 from jsspetri.utils.obs_fms import get_obs
 
 
@@ -98,11 +98,16 @@ class FmsEnv(Env):
         
         return observation, reward, terminated, False, info
 
-    def render(self,rank=False,format_="png",dpi=300):
+    def render(self,zoom=False ,rank=False,format_="png",dpi=300):
         """
         Render the environment.
         """
         if self.render_mode == "solution":
+             
+            if zoom :
+                for i in range (self.sim.n_jobs):
+                    plot_job(self.sim,job=i,format_=format_,dpi=dpi)
+                    
             plot_solution(self.sim,show_rank=rank,format_=format_,dpi=dpi)
        
 

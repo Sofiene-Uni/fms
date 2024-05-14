@@ -60,8 +60,7 @@ class Simulator(Petri_build):
             place.token_container = []
         self.add_tokens()
    
-    
-        
+
         self.jobs = [p for p in self.places.values() if p.uid in self.filter_nodes("job")]
         self.select = [p for p in self.transitions.values() if p.uid in self.filter_nodes("select")]
         self.ready = [p for p in self.places.values() if p.uid in self.filter_nodes("ready")]
@@ -69,7 +68,6 @@ class Simulator(Petri_build):
         self.machines = [p for p in self.places.values() if p.uid in self.filter_nodes("machine")]
         self.deliver = [t for t in self.transitions.values() if t.uid in self.filter_nodes("finish_op")]
         self.delivery = [p for p in self.places.values() if p.uid in self.filter_nodes("finished_ops")]
-        
         
 
     def action_mapping(self, n_machines, n_jobs):
@@ -166,7 +164,7 @@ class Simulator(Petri_build):
         self.clock += 1
         self.safeguard()
         
-        for place in self.ready + self.machines:
+        for place in self.jobs+ self.ready + self.machines:
                 if  place.token_container:
                     token = place.token_container[0]
             
@@ -215,8 +213,6 @@ class Simulator(Petri_build):
             bool: True if a transition is fired, False otherwise.
         """
         
-        
-        
         self.interaction_counter += 1
         
         origin, destination = self.action_map[int(action)] 
@@ -227,7 +223,6 @@ class Simulator(Petri_build):
                selected= self.transfer_token(self.jobs[origin], self.ready[destination], self.clock) 
                self.jobs[origin].busy= True
                return selected
-           
             else :                           #allocate 
                 allocated = self.transfer_token(self.ready[origin], self.machines[destination], self.clock)  
                 self.ready[origin].busy = False
@@ -258,9 +253,7 @@ class Simulator(Petri_build):
                         
                 elif  place.type == "ready" and elapsed_time> token.trans_time:
                     self.ready[token.color[0]].busy = True   #token is available 
-                    
-                      
-                    
+
         self.time_tick()          
         self.delivery_history[self.clock] = [token for place in self.delivery for token in place.token_container]
         
@@ -274,8 +267,7 @@ class Simulator(Petri_build):
             action: Action to be performed.
         """
 
-        fired=self.fire_controlled(action)
-        
+        fired=self.fire_controlled(action)  
         while sum(self.action_masks()) == 0:
             self.fire_timed()
             if self.is_terminal():
