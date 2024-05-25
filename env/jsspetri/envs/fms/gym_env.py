@@ -109,6 +109,8 @@ class FmsEnv(Env):
                     plot_job(self.sim,job=i,format_=format_,dpi=dpi)
                     
             plot_solution(self.sim,show_rank=rank,format_=format_,dpi=dpi)
+            for i in range(self.sim.n_jobs):
+                plot_job(self.sim,job=i,format_=format_,dpi=dpi)
        
 
     def close(self):

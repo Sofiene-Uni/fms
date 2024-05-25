@@ -40,8 +40,8 @@ def train_jssp(instance_id, timesteps=100000,dynamic=False):
 def main():
     
     #instances= ["ta11","ta21","ta61","ta01"]
-    instances= ["ta01"]
-    timesteps = 1e5
+    instances= ["ta02"]
+    timesteps = 100000
 
     for instance_id  in instances :
         train_jssp(instance_id, timesteps=timesteps)

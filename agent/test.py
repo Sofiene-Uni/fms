@@ -7,9 +7,9 @@ from sb3_contrib.common.maskable.utils import get_action_masks
 #%% create environement 
 
 
-def agent_test(agent_id="ta01",instance="ta01",dynamic = False ,render_mode="solution"):
+def agent_test(agent_id="ta01-100000.0",instance="ta01",dynamic = False ,render_mode="solution"):
     
-    local_agent = f"agents/MaskablePPO-{agent_id}.zip"
+    local_agent = f"models/MaskablePPO-{agent_id}.zip"
     global_agent= "agnets/MaskablePPO.zip"
     
     env = gym.make("jsspetri-fms-v0",
@@ -47,8 +47,8 @@ def agent_test(agent_id="ta01",instance="ta01",dynamic = False ,render_mode="sol
 if __name__ == "__main__":
     
     
-    instance_id="ta01"
-    agent_id="ta01"
+    instance_id="ta02"
+    agent_id="ta02-100000"
 
     samples = [agent_test(agent_id,instance=instance_id) for _ in range(1)]
     print(min(samples),max(samples),sum(samples)/len(samples))
