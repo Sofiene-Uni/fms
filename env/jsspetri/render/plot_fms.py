@@ -93,7 +93,7 @@ def plot_job(jssp,job=0 ,format_="jpg" ,dpi=300):
         os.makedirs(solution_folder)
         
     current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-    file_path = f"{solution_folder}/{current_datetime}.jpg"
+    file_path = f"{solution_folder}/{current_datetime}.{format_}"
 
 
     #the tokens in the delivery places at the last time step :
@@ -212,7 +212,7 @@ def plot_job(jssp,job=0 ,format_="jpg" ,dpi=300):
     
     plt.tight_layout()  
     plt.show() 
-    fig.savefig(file_path, format_=format_, dpi=dpi)
+    fig.savefig(file_path, format=format_, dpi=dpi)
     
                     
                     

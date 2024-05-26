@@ -9,10 +9,13 @@ from datetime import datetime
 #tensorboard_log="logs"
 
 
-def train_jssp(instance_id, timesteps=100000,dynamic=False):
+def train_jssp(instance_id, benchmark = 'Taillard', trans = True, trans_layout = None, timesteps=100000,dynamic=False):
     env = gym.make("jsspetri-fms-v0",
                    render_mode="solution",
                    instance_id=instance_id,
+                   benchmark=benchmark,
+                   trans_layout = trans_layout,
+                   trans= trans,
                    dynamic=dynamic,
     ).unwrapped
     
@@ -21,7 +24,7 @@ def train_jssp(instance_id, timesteps=100000,dynamic=False):
 
     start_time = time.time()  
     model.learn(total_timesteps=timesteps)
-    end_time = time.time()  
+    end_time = time.time()
     elapsed_time = end_time - start_time  
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M")
     
@@ -38,13 +41,22 @@ def train_jssp(instance_id, timesteps=100000,dynamic=False):
     model.save(f"models/MaskablePPO-{instance_id}-{timesteps}.zip")
 
 def main():
-    
-    #instances= ["ta11","ta21","ta61","ta01"]
-    instances= ["ta02"]
-    timesteps = 100000
 
-    for instance_id  in instances :
-        train_jssp(instance_id, timesteps=timesteps)
+    #instances= ["ta11","ta21","ta61","ta01"]
+    # instances= ["ta01"]
+    # timesteps = 100000
+    # benchmark = "Taillard"
+    #
+    # for instance_id  in instances :
+    #     train_jssp(instance_id, benchmark=benchmark, trans_layout='trans_15', timesteps=timesteps)
+    instances = ["bu01.txt"]
+    timesteps = 100
+    benchmark = "BU"
+    trans = False
+
+    for instance_id in instances:
+        train_jssp(instance_id, benchmark=benchmark, trans = trans, trans_layout='bu_lay01.txt', timesteps=timesteps)
+
 
 if __name__ == "__main__":
     main()

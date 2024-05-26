@@ -26,7 +26,9 @@ class Simulator(Petri_build):
     """
 
     def __init__(self, 
-                 instance_id, 
+                 instance_id,
+                 benchmark = "Taillard",
+                 trans_layout = None,
                  dynamic=False,
                  standby=False,
                  trans=True):
@@ -37,11 +39,13 @@ class Simulator(Petri_build):
             instanceID (str): Identifier for the JSSP instance.
             dynamic (bool): If True, appending new operations is possible, and the termination condition is that all queues are empty.
         """
-        super().__init__(instance_id, 
+        super().__init__(instance_id,
+                         benchmark = benchmark,
+                         trans_layout = trans_layout,
                          dynamic=dynamic,
                          standby=standby,
                          trans=trans)
-
+        # self.i = 0
         self.clock = 0
         self.interaction_counter = 0
         self.delivery_history = {}
@@ -49,7 +53,7 @@ class Simulator(Petri_build):
         self.petri_reset()
         
         self.action_map = self.action_mapping(self.n_machines, self.n_jobs)
-       
+
 
     def petri_reset(self):
         """
@@ -94,7 +98,7 @@ class Simulator(Petri_build):
                  tuples.append(tuple_entry)
                  index = n_jobs+ len(tuples) - 1
                  mapping_dict[index] = tuple_entry
-                 
+
          return mapping_dict
     
 
@@ -126,7 +130,7 @@ class Simulator(Petri_build):
     
   
     def valid_action(self,action):
-        
+        # print(self.i) if self.i < 500 else None
         valid = False
         origin,destination=self.action_map[int(action)]
         
@@ -153,7 +157,7 @@ class Simulator(Petri_build):
     def action_masks(self):
         actions = range(len (self.action_map))
         enabled_mask = list(map (self.valid_action, actions))
-
+        # self.i += 1
         return enabled_mask
         
 
@@ -215,7 +219,8 @@ class Simulator(Petri_build):
         
         self.interaction_counter += 1
         
-        origin, destination = self.action_map[int(action)] 
+        origin, destination = self.action_map[int(action)]
+        print((origin, destination))
         
         if action in [index for index, value in enumerate(self.action_masks()) if value]: 
             
@@ -267,12 +272,13 @@ class Simulator(Petri_build):
             action: Action to be performed.
         """
 
-        fired=self.fire_controlled(action)  
+        fired=self.fire_controlled(action)
+        # print(self.action_masks())
         while sum(self.action_masks()) == 0:
             self.fire_timed()
             if self.is_terminal():
                 break
-            
+
         return fired
 
 if __name__ == "__main__":

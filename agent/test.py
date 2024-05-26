@@ -7,7 +7,7 @@ from sb3_contrib.common.maskable.utils import get_action_masks
 #%% create environement 
 
 
-def agent_test(agent_id="ta01-100000.0",instance="ta01",dynamic = False ,render_mode="solution"):
+def agent_test(agent_id="ta01-100000.0",instance="ta01", benchmark = "Taillard", trans = True, trans_layout = None, dynamic = False ,render_mode="solution"):
     
     local_agent = f"models/MaskablePPO-{agent_id}.zip"
     global_agent= "agnets/MaskablePPO.zip"
@@ -15,6 +15,9 @@ def agent_test(agent_id="ta01-100000.0",instance="ta01",dynamic = False ,render_
     env = gym.make("jsspetri-fms-v0",
                    render_mode=render_mode,
                    instance_id=instance,
+                   benchmark=benchmark,
+                   trans = trans,
+                   trans_layout = trans_layout,
                    dynamic=dynamic
                
                 
@@ -33,7 +36,7 @@ def agent_test(agent_id="ta01-100000.0",instance="ta01",dynamic = False ,render_
         obs, reward, terminated, truncated,info= env.step(action)
         
         i+=1 
-        print(i)  
+        print(i,action)
         
     end_time = time.time()
     elapsed_time = end_time - start_time    
@@ -47,11 +50,23 @@ def agent_test(agent_id="ta01-100000.0",instance="ta01",dynamic = False ,render_
 if __name__ == "__main__":
     
     
-    instance_id="ta02"
-    agent_id="ta02-100000"
+    # instance_id="ta02"
+    # agent_id="ta02-100000"
+    #
+    # samples = [agent_test(agent_id,instance=instance_id) for _ in range(1)]
+    # print(min(samples),max(samples),sum(samples)/len(samples))
+    instance_id = "bu01.txt"
+    agent_id = "bu01.txt-100000"
+    benchmark = "BU"
+    trans_layout = "bu_lay01.txt"
+    trans = False
 
-    samples = [agent_test(agent_id,instance=instance_id) for _ in range(1)]
-    print(min(samples),max(samples),sum(samples)/len(samples))
+    samples = [agent_test(agent_id,
+                          instance=instance_id,
+                          benchmark=benchmark,
+                          trans = trans,
+                          trans_layout = trans_layout) for _ in range(1)]
+    print(min(samples), max(samples), sum(samples) / len(samples))
         
         
         

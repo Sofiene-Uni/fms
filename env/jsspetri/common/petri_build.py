@@ -18,6 +18,8 @@ class Petri_build:
     """
 
     def __init__(self, instance_id,
+                 benchmark = "Taillard",
+                 trans_layout = None,
                  dynamic=False,
                  standby=False,
                  trans=False,
@@ -30,13 +32,17 @@ class Petri_build:
         self.dynamic=dynamic
         self.standby=standby
         self.trans=trans
-        
+        self.benchmark = benchmark
+        self.trans_layout = trans_layout
         self.instance_id = instance_id
-        self.instance, specs = load_instance(self.instance_id)    
-        self.n_jobs, self.n_machines, self.n_features,self.max_bound = specs
+        self.instance, specs = load_instance(instance_id = self.instance_id, benchmark = self.benchmark)
+        self.n_jobs, self.n_machines, self.n_features,self.max_bound, self.is_variable = specs
         
         if self.trans :  
-            self.tran_durations = load_trans(self.n_machines)
+            self.tran_durations = load_trans(self.n_machines,
+                                             benchmark = self.benchmark,
+                                             trans_layout = self.trans_layout,
+                                             is_variable = self.is_variable)
            
 
         self.places = {}
