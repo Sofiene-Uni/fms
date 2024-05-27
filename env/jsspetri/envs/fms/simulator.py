@@ -245,6 +245,7 @@ class Simulator(Petri_build):
             if action < self.n_jobs :        #select
                selected= self.transfer_token(self.jobs[origin], self.ready[destination], self.clock) 
                self.jobs[origin].busy= True
+               self.ready[destination].busy = True
                return selected
             else :                           #allocate 
                 allocated = self.transfer_token(self.ready[origin], self.machines[destination], self.clock)  

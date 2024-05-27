@@ -49,13 +49,14 @@ def main():
     #
     # for instance_id  in instances :
     #     train_jssp(instance_id, benchmark=benchmark, trans_layout='trans_15', timesteps=timesteps)
-    instances = ["bu01.txt"]
-    timesteps = 100
+    instances = ["bu01"]
+    timesteps = 100000
     benchmark = "BU"
-    trans = False
+    trans = True
+    trans_lay = 'trans_4_1'
 
     for instance_id in instances:
-        train_jssp(instance_id, benchmark=benchmark, trans = trans, trans_layout='bu_lay01.txt', timesteps=timesteps)
+        train_jssp(instance_id, benchmark=benchmark, trans = trans, trans_layout=trans_lay, timesteps=timesteps)
 
 
 if __name__ == "__main__":
