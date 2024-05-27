@@ -60,9 +60,9 @@ if __name__ == "__main__":
 
 
     instance_id = "bu01"
-    agent_id = "bu01"
+    agent_id = "bu01.txt-100000"
     benchmark = "BU"
-    trans_layout = "trasn_"
+    trans_layout = "trans_4_1"
     trans = True
 
     samples = [agent_test(agent_id,
