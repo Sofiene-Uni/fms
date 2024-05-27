@@ -245,7 +245,10 @@ class Simulator(Petri_build):
             if action < self.n_jobs :        #select
                selected= self.transfer_token(self.jobs[origin], self.ready[destination], self.clock) 
                self.jobs[origin].busy= True
-               self.ready[destination].busy = True
+               token = self.ready[destination].token_container[0]
+               _, _, elapsed_time = list(token.logging.items())[-1][-1]
+               if elapsed_time >= token.trans_time:
+                   self.ready[destination].busy = True
                return selected
             else :                           #allocate 
                 allocated = self.transfer_token(self.ready[origin], self.machines[destination], self.clock)  
@@ -277,7 +280,7 @@ class Simulator(Petri_build):
 
                 # elif  place.type == "ready" and elapsed_time> token.trans_time:
                 # The tokens shall be ready right when the elapsed time is equal to process times
-                elif place.type == "ready" and elapsed_time > token.trans_time:
+                elif place.type == "ready" and elapsed_time >= token.trans_time:
                     self.ready[token.color[0]].busy = True   # token is available
 
         self.delivery_history[self.clock] = [token for place in self.delivery for token in place.token_container]

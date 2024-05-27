@@ -10,7 +10,7 @@ from sb3_contrib.common.maskable.utils import get_action_masks
 def agent_test(agent_id="ta01-100000.0",instance="ta01", benchmark = "Taillard", trans = True, trans_layout = None, dynamic = False ,render_mode="solution"):
     
     # local_agent = f"agents/MaskablePPO-{agent_id}.zip"
-    local_agent = f"models/MaskablePPO-{agent_id}.zip"
+    local_agent = f"agents/MaskablePPO-{agent_id}.zip"
     global_agent= "agnets/MaskablePPO.zip"
     
     env = gym.make("jsspetri-fms-v0",
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
 
     instance_id = "bu01"
-    agent_id = "bu01.txt-100000"
+    agent_id = "bu01-100000"
     benchmark = "BU"
     trans_layout = "trans_4_1"
     trans = True
