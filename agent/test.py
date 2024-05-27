@@ -48,8 +48,8 @@ def agent_test(agent_id="ta01",instance="ta01",dynamic = False ,render_mode="sol
 if __name__ == "__main__":
     
     
-    instance_id="ta01"
-    agent_id="ta01-3000000.0"
+    instance_id="bu01"
+    agent_id="bu01"
 
     samples = [agent_test(agent_id,instance=instance_id) for _ in range(1)]
     print(min(samples),max(samples),sum(samples)/len(samples))
