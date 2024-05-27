@@ -144,7 +144,7 @@ class Simulator(Petri_build):
             if self.ready [origin].token_container :   
                 token = self.ready[origin].token_container[0]
       
-                ready =  self.ready[origin].busy    # a token is ready to be allocated 
+                ready =  self.ready[origin].busy    # a token is ready to be allocated
                 color = token.color[1] == self.machines[destination].color
                 machine = not self.machines[destination].busy
                 
@@ -217,7 +217,7 @@ class Simulator(Petri_build):
             bool: True if a transition is fired, False otherwise.
         """
         
-        self.interaction_counter += 1
+        self.interaction_counter += 10
         
         origin, destination = self.action_map[int(action)]
         print((origin, destination))
@@ -227,6 +227,7 @@ class Simulator(Petri_build):
             if action < self.n_jobs :        #select
                selected= self.transfer_token(self.jobs[origin], self.ready[destination], self.clock) 
                self.jobs[origin].busy= True
+               self.ready[destination].busy = True
                return selected
             else :                           #allocate 
                 allocated = self.transfer_token(self.ready[origin], self.machines[destination], self.clock)  
@@ -244,24 +245,28 @@ class Simulator(Petri_build):
         Fires autonomous transitions based on completion times.
         """
 
-        for  place  in self.machines +self.ready  : 
+        for place in self.machines + self.ready:
             if place.token_container:
                 token = place.token_container[0]
                 _, _, elapsed_time = list(token.logging.items())[-1][-1]
-                
-                if  place.type == "machine" and elapsed_time> token.process_time  :
-                    
+
+                # if  place.type == "machine" and elapsed_time> token.process_time  :
+                # The jobs shall finish right when the elapsed time is equal to process times
+                if place.type == "machine" and elapsed_time >= token.process_time:
                     self.transfer_token(place, self.delivery[place.color], self.clock)
                     self.jobs[token.color[0]].busy = False
                     self.machines[token.color[1]].busy = False
-           
-                        
-                elif  place.type == "ready" and elapsed_time> token.trans_time:
-                    self.ready[token.color[0]].busy = True   #token is available 
 
-        self.time_tick()          
+                # elif  place.type == "ready" and elapsed_time> token.trans_time:
+                # The tokens shall be ready right when the elapsed time is equal to process times
+                elif place.type == "ready" and elapsed_time > token.trans_time:
+                    self.ready[token.color[0]].busy = True   # token is available
+
         self.delivery_history[self.clock] = [token for place in self.delivery for token in place.token_container]
-        
+        # If delivery is done, at least one ready will be free, thus more valid actions, without ticking the time
+        if sum(self.action_masks()) == 0:
+            self.time_tick()
+
   
     def interact(self, action):
         

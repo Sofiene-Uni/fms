@@ -76,7 +76,8 @@ def plot_solution(jssp, show_rank=False ,format_="jpg" ,dpi=300):
     ax.set_title(f"Jssp Solution Visualization for {jssp.instance_id}  : {jssp.n_jobs} jobs X {jssp.n_machines} machines", fontsize=18, fontweight='bold')
 
 
-    plt.tight_layout()  
+    plt.tight_layout()
+    plt.grid(True, axis='x', linestyle='-')
     plt.show() 
     fig.savefig(file_path, format=format_, dpi=dpi)
     
@@ -210,7 +211,8 @@ def plot_job(jssp,job=0 ,format_="jpg" ,dpi=300):
    
    
     
-    plt.tight_layout()  
+    plt.tight_layout()
+    plt.grid(True, axis='x', linestyle='-')
     plt.show() 
     fig.savefig(file_path, format=format_, dpi=dpi)
     

@@ -51,21 +51,25 @@ if __name__ == "__main__":
     
     
     # instance_id="ta02"
+    # benchmark = "Taillard"
+    # trans = True
+    # trans_layout = 'trans_15'
     # agent_id="ta02-100000"
-    #
-    # samples = [agent_test(agent_id,instance=instance_id) for _ in range(1)]
-    # print(min(samples),max(samples),sum(samples)/len(samples))
+
+
     instance_id = "bu01.txt"
     agent_id = "bu01.txt-100000"
     benchmark = "BU"
     trans_layout = "bu_lay01.txt"
-    trans = False
+    trans = True
 
     samples = [agent_test(agent_id,
                           instance=instance_id,
                           benchmark=benchmark,
                           trans = trans,
                           trans_layout = trans_layout) for _ in range(1)]
+
+
     print(min(samples), max(samples), sum(samples) / len(samples))
         
         

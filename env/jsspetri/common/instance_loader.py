@@ -16,6 +16,7 @@ def load_instance_raw(instance_id,benchmark):
     instance_path = f"{os.path.dirname(__file__)}\\instances\\{benchmark}\\{instance_id}"
     data = []
     job_lens = []
+    is_variable = False
     try:
         with open(instance_path, 'r') as file:
             for line in file:
@@ -32,7 +33,7 @@ def load_instance_raw(instance_id,benchmark):
         while len(task) != max(job_lens):
             is_variable = True
             dummy_machines = 1
-            task.extend([0,-1])
+            task.extend([0,0])
     raw_instance = pd.DataFrame(data)
     n_job, n_machine = tuple(raw_instance.iloc[0].dropna().astype(int))
     n_machine += dummy_machines
