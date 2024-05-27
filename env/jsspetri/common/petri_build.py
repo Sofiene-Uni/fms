@@ -18,10 +18,12 @@ class Petri_build:
     """
 
     def __init__(self, instance_id,
+                 benchmark = "Taillard",
+                 trans_layout = None,
                  dynamic=False,
                  standby=False,
                  trans=False,
-                 benchmark='Taillard'):
+                 max_size=(100,20)):
         """
         Initialize the Petri net with a JSSP instance.
         Parameters:
@@ -30,20 +32,24 @@ class Petri_build:
         self.dynamic=dynamic
         self.standby=standby
         self.trans=trans
-        
+        self.benchmark = benchmark
+        self.trans_layout = trans_layout
+
         self.instance_id = instance_id
-        self.instance, specs = load_instance(self.instance_id,benchmark=benchmark)    
+        self.instance, specs = load_instance(instance_id = self.instance_id, benchmark = self.benchmark)
         self.n_jobs, self.n_machines, self.n_features,self.max_bound = specs
         
         if self.trans :  
-            self.tran_durations = load_trans(self.n_machines,benchmark=benchmark)
+            self.tran_durations = load_trans(self.n_machines,
+                                             benchmark = self.benchmark,
+                                             trans_layout = self.trans_layout)
            
 
         self.places = {}
         self.transitions = {}
         
         if  self.dynamic : 
-            self.n_jobs,self.n_machines=100,20
+            self.n_jobs,self.n_machines=max_size
           
         self.create_petri()
             
@@ -101,9 +107,6 @@ class Petri_build:
             for parent, child in zip(parent_nodes, child_nodes):
                 parent.add_arc(child, parent=False)
                 child.add_arc(parent, parent=True)
-                
-                
-    
 
     def add_tokens(self):
         """
@@ -115,28 +118,29 @@ class Petri_build:
 
             if origin is not destintion : # change of machine
                 try :
-                    trans_time=int (self.tran_durations[origin][destintion])  
+                    trans_time=int (self.tran_durations[origin][destintion])
                 except :
                     trans_time=0
             return trans_time
-        
+
 
         for job, uid in enumerate(self.filter_nodes("job")):
-            current_machine=None            
-            try : # only add token to the operation in the instance  (for dynamic variant ) 
-                for i,(machine,features) in enumerate (self.instance[job].items()) : 
-                    
-                    trans_time= cal_time(origin=current_machine,destintion=machine) 
-                    
+            current_machine=None
+            try : # only add token to the operation in the instance  (for dynamic variant )
+                for i,(machine,features) in enumerate (self.instance[job].items()) :
+
+                    trans_time= cal_time(origin=current_machine,destintion=machine)
+
                     self.places[uid].token_container.append( Token(initial_place=uid, color=(job, machine),
                                                                    features=features ,
                                                                    order=i ,
-                                                                   trans_time= trans_time ))  
+                                                                   trans_time= trans_time ))
                     current_machine = copy.copy(machine)
-    
+
             except :
-                pass # the reserve jobs are empty 
-        
+                pass # the reserve jobs are empty
+
+    
     
     def filter_nodes(self, node_type):
         """
@@ -207,12 +211,12 @@ if __name__ == "__main__":
     
     benchmark='BU'
     instance_id="bu01"
+
+    petri=Petri_build(instance_id,trans=True , benchmark=benchmark)
     
-    petri=Petri_build(instance_id,trans=True , benchmark=benchmark) 
-    
-    
-    
-    
+
+
+
 
  
 

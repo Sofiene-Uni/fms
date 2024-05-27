@@ -15,6 +15,9 @@ class FmsEnv(Env):
 
     def __init__(self, 
                  instance_id :str ,
+                 benchmark = "Taillard",
+                 trans = True,
+                 trans_layout = None,
                  render_mode: bool =None,
                  observation_depth:int =1, 
                  dynamic: bool=False,
@@ -36,7 +39,7 @@ class FmsEnv(Env):
         self.dynamic=dynamic
         self.instance_id=instance_id
 
-        self.sim = Simulator(self.instance_id,dynamic=self.dynamic,standby=standby)
+        self.sim = Simulator(self.instance_id, benchmark = benchmark, trans = trans, trans_layout=trans_layout,dynamic=self.dynamic,standby=standby)
         self.observation_depth = min(observation_depth, self.sim.n_machines)
    
          
@@ -69,8 +72,8 @@ class FmsEnv(Env):
             Any: Calculated reward .
         """
         
-        return self.sim.utilization_reward()
-    
+        # return self.sim.utilization_reward()
+        return self.sim.makespan_reward()
 
     def action_masks(self):
         """

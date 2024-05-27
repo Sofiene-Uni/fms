@@ -26,10 +26,12 @@ class Simulator(Petri_build):
     """
 
     def __init__(self, 
-                 instance_id, 
+                 instance_id,
+                 benchmark = "Taillard",
+                 trans_layout = None,
                  dynamic=False,
                  standby=False,
-                  ):
+                 trans=True):
         """
         Initializes the JSSPSimulator.
 
@@ -38,14 +40,15 @@ class Simulator(Petri_build):
             dynamic (bool): If True, appending new operations is possible, and the termination condition is that all queues are empty.
 
             trans (bool) : if True the transport time between machines in taken into considiration
-            
+
         """
-        super().__init__(instance_id, 
+        super().__init__(instance_id,
+                         benchmark = benchmark,
+                         trans_layout = trans_layout,
                          dynamic=dynamic,
                          standby=standby,
-                         trans=True,
-                         benchmark='BU')
-
+                         trans=trans)
+        # self.i = 0
         self.clock = 0
         self.interaction_counter = 0
         self.delivery_history = {}
@@ -53,7 +56,7 @@ class Simulator(Petri_build):
         self.petri_reset()
         
         self.action_map = self.action_mapping(self.n_machines, self.n_jobs)
-       
+
 
     def petri_reset(self):
         """
@@ -98,9 +101,21 @@ class Simulator(Petri_build):
                  tuples.append(tuple_entry)
                  index = n_jobs+ len(tuples) - 1
                  mapping_dict[index] = tuple_entry
-                 
+
          return mapping_dict
-    
+
+    def makespan_reward(self):
+        """
+        Calculate the reward.
+        Parameters:
+            advantage: Advantage given by the interaction.
+        Returns:
+            Any: Calculated reward .
+        """
+        if self.is_terminal:
+            return -self.clock
+        else:
+            return 0
 
     def utilization_reward(self):
         """
@@ -125,7 +140,7 @@ class Simulator(Petri_build):
 
 
     def print_state(self):
-        print("******current state**********") 
+        print("******current state**********")
         print( [p.busy for p in self.jobs])
         print( [p.busy for p in self.machines])
         print( [len(p.token_container) for p in self.jobs])
@@ -145,19 +160,12 @@ class Simulator(Petri_build):
         empty_queue = all(len(p.token_container) == 0 for p in self.jobs)
         empty_transit = all(len(p.token_container) == 0 for p in self.ready) 
         empty_machines = all(len(p.token_container) == 0 for p in self.machines) 
-        
-        #self.print_state()
-        
-        
-        
-        
-        
-
+       
         return empty_queue and empty_transit  and empty_machines 
     
   
     def valid_action(self,action):
-        
+        # print(self.i) if self.i < 500 else None
         valid = False
         origin,destination=self.action_map[int(action)]
         
@@ -171,17 +179,20 @@ class Simulator(Petri_build):
             if self.ready [origin].token_container :   
                 token = self.ready[origin].token_container[0]
       
-                ready =  self.ready[origin].busy    # a token is ready to be allocated 
+                ready =  self.ready[origin].busy    # a token is ready to be allocated
                 color = token.color[1] == self.machines[destination].color
                 machine = not self.machines[destination].busy
+                
                 valid =  color and machine and ready 
                 
         return valid 
                 
             
+
     def action_masks(self):
         actions = range(len (self.action_map))
         enabled_mask = list(map (self.valid_action, actions))
+        # self.i += 1
         return enabled_mask
         
 
@@ -222,7 +233,7 @@ class Simulator(Petri_build):
 
         return True
 
-  
+
                    
 
     def fire_controlled(self, action):
@@ -238,13 +249,18 @@ class Simulator(Petri_build):
         
         self.interaction_counter += 1
         
-        origin, destination = self.action_map[int(action)] 
+        origin, destination = self.action_map[int(action)]
+        # print((origin, destination))
         
         if action in [index for index, value in enumerate(self.action_masks()) if value]: 
             
             if action < self.n_jobs :        #select
                selected= self.transfer_token(self.jobs[origin], self.ready[destination], self.clock) 
                self.jobs[origin].busy= True
+               token = self.ready[destination].token_container[0]
+               _, _, elapsed_time = list(token.logging.items())[-1][-1]
+               if elapsed_time >= token.trans_time:
+                   self.ready[destination].busy = True
                return selected
             else :                           #allocate 
                 allocated = self.transfer_token(self.ready[origin], self.machines[destination], self.clock)  
@@ -262,24 +278,28 @@ class Simulator(Petri_build):
         Fires autonomous transitions based on completion times.
         """
 
-        for  place  in self.machines +self.ready  : 
+        for place in self.machines + self.ready:
             if place.token_container:
                 token = place.token_container[0]
                 _, _, elapsed_time = list(token.logging.items())[-1][-1]
-                
-                if  place.type == "machine" and elapsed_time> token.process_time  :
-                    
+
+                # if  place.type == "machine" and elapsed_time> token.process_time  :
+                # The jobs shall finish right when the elapsed time is equal to process times
+                if place.type == "machine" and elapsed_time >= token.process_time:
                     self.transfer_token(place, self.delivery[place.color], self.clock)
                     self.jobs[token.color[0]].busy = False
                     self.machines[token.color[1]].busy = False
-           
-                        
-                elif  place.type == "ready" and elapsed_time> token.trans_time:
-                    self.ready[token.color[0]].busy = True   #token is available 
 
-        self.time_tick()          
+                # elif  place.type == "ready" and elapsed_time> token.trans_time:
+                # The tokens shall be ready right when the elapsed time is equal to process times
+                elif place.type == "ready" and elapsed_time >= token.trans_time:
+                    self.ready[token.color[0]].busy = True   # token is available
+
         self.delivery_history[self.clock] = [token for place in self.delivery for token in place.token_container]
-        
+        # If delivery is done, at least one ready will be free, thus more valid actions, without ticking the time
+        if sum(self.action_masks()) == 0:
+            self.time_tick()
+
   
     def interact(self, action):
         
@@ -290,37 +310,34 @@ class Simulator(Petri_build):
             action: Action to be performed.
         """
 
-        fired=self.fire_controlled(action)  
+        fired=self.fire_controlled(action)
+        # print(self.action_masks())
         while sum(self.action_masks()) == 0:
             self.fire_timed()
             if self.is_terminal():
                 break
-            
+
         return fired
 
 if __name__ == "__main__":
     
-    petri = Simulator("bu01") 
-    
+    petri = Simulator("bu01")
+
     
     print( [len(p.token_container) for p in petri.jobs])
     print([len(p.token_container) for p in petri.ready])
     print ([len(p.token_container) for p in petri.machines])
-    
-    
+
+
     print (petri.action_masks())
-    print (petri.action_map) 
-      
-    
+    print (petri.action_map)
+
+
     # for job in  petri.jobs :
     #     for op in job.token_container :
     #         print(op)
-            
-    
-  
-
-    
 
 
-    
+
+
     
