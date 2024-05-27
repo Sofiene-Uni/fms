@@ -103,7 +103,19 @@ class Simulator(Petri_build):
                  mapping_dict[index] = tuple_entry
 
          return mapping_dict
-    
+
+    def makespan_reward(self):
+        """
+        Calculate the reward.
+        Parameters:
+            advantage: Advantage given by the interaction.
+        Returns:
+            Any: Calculated reward .
+        """
+        if self.is_terminal:
+            return -self.clock
+        else:
+            return 0
 
     def utilization_reward(self):
         """
@@ -238,7 +250,7 @@ class Simulator(Petri_build):
         self.interaction_counter += 1
         
         origin, destination = self.action_map[int(action)]
-        print((origin, destination))
+        # print((origin, destination))
         
         if action in [index for index, value in enumerate(self.action_masks()) if value]: 
             
