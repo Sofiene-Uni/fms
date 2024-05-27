@@ -2,11 +2,11 @@ import numpy as np
 
 class Lptn():
     def __init__(self):
-        self.label = "LPTX"
+        self.label = "LPTN"
         self.type_ = "dynamic"
         
     def __str__(self):
-        return "Longest Processing Time next (LPTX): Select the job with an operation that is ready to be processed next and has the longest processing time."
+        return "Longest Processing Time next (LPTN): Select the job with an operation that is ready to be processed next and has the longest processing time."
    
     def decide(self, sim):
         def get_processing_time(job):

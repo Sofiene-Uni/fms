@@ -2,11 +2,11 @@ import numpy as np
 
 class Sptn():
     def __init__(self):
-        self.label = "SPTX"
+        self.label = "SPTN"
         self.type_ = "Dynamic"
         
     def __str__(self):
-        return "Shortest Processing Time next (SPTX): Select the job with an operation that is ready to be processed next and has the shortest processing time."
+        return "Shortest Processing Time next (SPTN): Select the job with an operation that is ready to be processed next and has the shortest processing time."
    
     def decide(self, sim):
         def get_processing_time(job):

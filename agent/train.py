@@ -38,7 +38,7 @@ def train_jssp(instance_id, benchmark = 'Taillard', trans = True, trans_layout =
             info_file.write(f" {current_datetime} -The total {instance_id} training time (seconds): {elapsed_time}\n")
       
     print(f"Training took {elapsed_time} seconds")
-    model.save(f"models/MaskablePPO-{instance_id}-{timesteps}.zip")
+    model.save(f"agents/MaskablePPO-{instance_id}-{timesteps}.zip")
 
 def main():
 

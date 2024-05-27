@@ -9,6 +9,7 @@ from sb3_contrib.common.maskable.utils import get_action_masks
 
 def agent_test(agent_id="ta01-100000.0",instance="ta01", benchmark = "Taillard", trans = True, trans_layout = None, dynamic = False ,render_mode="solution"):
     
+    # local_agent = f"agents/MaskablePPO-{agent_id}.zip"
     local_agent = f"models/MaskablePPO-{agent_id}.zip"
     global_agent= "agnets/MaskablePPO.zip"
     
@@ -35,12 +36,13 @@ def agent_test(agent_id="ta01-100000.0",instance="ta01", benchmark = "Taillard",
         action, _states = model.predict(obs, action_masks=action_masks)
         obs, reward, terminated, truncated,info= env.step(action)
         
-        i+=1 
+
+        i+=1
         print(i,action)
         
     end_time = time.time()
     elapsed_time = end_time - start_time    
-    env.render(rank=True,format_="pdf")
+    env.render(zoom=True,rank=True,format_="pdf")
         
     print(f" inference took {elapsed_time} seconds") 
     print(f" Makespan : {env.sim.clock} , number of interactions {env.sim.interaction_counter}")

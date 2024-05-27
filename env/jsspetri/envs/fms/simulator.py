@@ -38,6 +38,9 @@ class Simulator(Petri_build):
         Parameters:
             instanceID (str): Identifier for the JSSP instance.
             dynamic (bool): If True, appending new operations is possible, and the termination condition is that all queues are empty.
+
+            trans (bool) : if True the transport time between machines in taken into considiration
+
         """
         super().__init__(instance_id,
                          benchmark = benchmark,
@@ -113,6 +116,26 @@ class Simulator(Petri_build):
         idle_machines = sum(1 for machine in self.machines if machine.busy)
         x = - (idle_machines / self.n_machines)
         return x
+
+
+
+    def safeguard(self):
+        for machine in self.machines:
+            if machine.token_container:
+                token=machine.token_container[0]
+                if machine.color != token.color[1] :
+                    print(f"error detected { (machine.color, token.color[1])}")
+
+
+    def print_state(self):
+        print("******current state**********")
+        print( [p.busy for p in self.jobs])
+        print( [p.busy for p in self.machines])
+        print( [len(p.token_container) for p in self.jobs])
+        print([len(p.token_container) for p in self.ready])
+        print ([len(p.token_container) for p in self.machines])
+        print ([len(p.token_container) for p in self.delivery])
+        print (self.action_masks())
 
 
     def is_terminal(self, step=0):
@@ -198,12 +221,7 @@ class Simulator(Petri_build):
 
         return True
 
-    def safeguard(self):
-        for machine in self.machines:
-            if machine.token_container:
-                token=machine.token_container[0]
-                if machine.color != token.color[1] :
-                    print(f"error detected { (machine.color, token.color[1])}")
+
                    
 
     def fire_controlled(self, action):
@@ -217,7 +235,7 @@ class Simulator(Petri_build):
             bool: True if a transition is fired, False otherwise.
         """
         
-        self.interaction_counter += 10
+        self.interaction_counter += 1
         
         origin, destination = self.action_map[int(action)]
         print((origin, destination))
@@ -227,7 +245,6 @@ class Simulator(Petri_build):
             if action < self.n_jobs :        #select
                selected= self.transfer_token(self.jobs[origin], self.ready[destination], self.clock) 
                self.jobs[origin].busy= True
-               self.ready[destination].busy = True
                return selected
             else :                           #allocate 
                 allocated = self.transfer_token(self.ready[origin], self.machines[destination], self.clock)  
@@ -288,14 +305,23 @@ class Simulator(Petri_build):
 
 if __name__ == "__main__":
     
-    petri = Simulator("ta01") 
+    petri = Simulator("bu01")
+
     
-    print (petri.action_map)  
+    print( [len(p.token_container) for p in petri.jobs])
+    print([len(p.token_container) for p in petri.ready])
+    print ([len(p.token_container) for p in petri.machines])
+
+
     print (petri.action_masks())
-    
-
-    
+    print (petri.action_map)
 
 
-    
+    # for job in  petri.jobs :
+    #     for op in job.token_container :
+    #         print(op)
+
+
+
+
     
