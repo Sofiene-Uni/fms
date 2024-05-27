@@ -35,13 +35,13 @@ def train_jssp(instance_id, timesteps=100000,dynamic=False):
             info_file.write(f" {current_datetime} -The total {instance_id} training time (seconds): {elapsed_time}\n")
       
     print(f"Training took {elapsed_time} seconds")
-    model.save(f"models/MaskablePPO-{instance_id}-{timesteps}.zip")
+    model.save(f"agents/MaskablePPO-{instance_id}-{timesteps}.zip")
 
 def main():
     
-    #instances= ["ta11","ta21","ta61","ta01"]
+ 
     instances= ["ta01"]
-    timesteps = 1e5
+    timesteps = 3e6
 
     for instance_id  in instances :
         train_jssp(instance_id, timesteps=timesteps)

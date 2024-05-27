@@ -30,13 +30,17 @@ class Simulator(Petri_build):
     def __init__(self, 
                  instance_id, 
                  dynamic=False,
-                 standby=False):
+                 standby=False,
+                 elite =None
+                 ):
         """
         Initializes the JSSPSimulator.
 
         Parameters:
             instanceID (str): Identifier for the JSSP instance.
             dynamic (bool): If True, appending new operations is possible, and the termination condition is that all queues are empty.
+            elite (int) : to only concider the top (n) heuristics , by default all heuristics are used 
+            trans (bool) : if True the transport time between machines in taken into considiration
         """
         super().__init__(instance_id, 
                          dynamic=dynamic,
@@ -48,7 +52,7 @@ class Simulator(Petri_build):
         self.jobs,self.select,self.ready,self.allocate,self.machines, self.deliver,self.delivery  = [], [], [], [], [] ,[], []
         self.petri_reset()
         
-        self.heuristics=init_heuristics()
+        self.heuristics=init_heuristics(elite)
         self.action_map = self.action_mapping(self.n_machines, self.n_jobs)
         
     
@@ -248,17 +252,15 @@ class Simulator(Petri_build):
         return fired
 
     def interact(self, heuristic_id):
-        
-    
-        
+
         """
         Performs Petri net interactions and updates internal state.
         Parameters:
             action: Action to be performed.
         """
         
-
-        action =self.heuristics[ heuristic_id].decide(self)
+        heuristic=self.heuristics[ heuristic_id]
+        action =heuristic.decide(self)
         fired=self.fire_allocate(action)
         
         while sum(self.action_masks()) == int (self.standby):
@@ -269,11 +271,8 @@ class Simulator(Petri_build):
         return fired
 
 if __name__ == "__main__":
-    
+
+  elite=None
   instance_id="ta01"
-  sim = Simulator(instance_id)
-  
-
-
-
+  sim = Simulator(instance_id,elite=elite)
   

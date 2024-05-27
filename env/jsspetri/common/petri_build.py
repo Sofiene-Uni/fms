@@ -21,7 +21,7 @@ class Petri_build:
                  dynamic=False,
                  standby=False,
                  trans=False,
-                 max_size=(100,20)):
+                 benchmark='Taillard'):
         """
         Initialize the Petri net with a JSSP instance.
         Parameters:
@@ -32,18 +32,18 @@ class Petri_build:
         self.trans=trans
         
         self.instance_id = instance_id
-        self.instance, specs = load_instance(self.instance_id)    
+        self.instance, specs = load_instance(self.instance_id,benchmark=benchmark)    
         self.n_jobs, self.n_machines, self.n_features,self.max_bound = specs
         
         if self.trans :  
-            self.tran_durations = load_trans(self.n_machines)
+            self.tran_durations = load_trans(self.n_machines,benchmark=benchmark)
            
 
         self.places = {}
         self.transitions = {}
         
         if  self.dynamic : 
-            self.n_jobs,self.n_machines=max_size
+            self.n_jobs,self.n_machines=100,20
           
         self.create_petri()
             
@@ -101,28 +101,42 @@ class Petri_build:
             for parent, child in zip(parent_nodes, child_nodes):
                 parent.add_arc(child, parent=False)
                 child.add_arc(parent, parent=True)
+                
+                
+    
 
     def add_tokens(self):
         """
         Add tokens to the Petri net.
         Tokens represent job operations .
         """
-   
-        for job, uid in enumerate(self.filter_nodes("job")):
-            
-            current_machine=None
-            for i,(machine,features) in enumerate (self.instance[job].items()) :       
-                if current_machine is not machine : # change of machine
 
-                    try :
-                        trans_time=int (self.tran_durations[current_machine][machine])  
-                    except :
-                        trans_time=0
-                    current_machine = copy.copy(machine)
+        def cal_time(origin,destintion):
+
+            if origin is not destintion : # change of machine
+                try :
+                    trans_time=int (self.tran_durations[origin][destintion])  
+                except :
+                    trans_time=0
+            return trans_time
+        
+
+        for job, uid in enumerate(self.filter_nodes("job")):
+            current_machine=None            
+            try : # only add token to the operation in the instance  (for dynamic variant ) 
+                for i,(machine,features) in enumerate (self.instance[job].items()) : 
                     
-                self.places[uid].token_container.append(
-                    Token(initial_place=uid, color=(job, machine), features=features ,order=i , trans_time= trans_time ))
+                    trans_time= cal_time(origin=current_machine,destintion=machine) 
+                    
+                    self.places[uid].token_container.append( Token(initial_place=uid, color=(job, machine),
+                                                                   features=features ,
+                                                                   order=i ,
+                                                                   trans_time= trans_time ))  
+                    current_machine = copy.copy(machine)
     
+            except :
+                pass # the reserve jobs are empty 
+        
     
     def filter_nodes(self, node_type):
         """
@@ -191,9 +205,15 @@ class Petri_build:
 # %% Test
 if __name__ == "__main__":
     
-    instance_id="ta01"
+    benchmark='BU'
+    instance_id="bu01"
     
-    petri=Petri_build(instance_id) 
+    petri=Petri_build(instance_id,trans=True , benchmark=benchmark) 
+    
+    
+    
+    
+
  
 
 

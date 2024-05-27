@@ -158,4 +158,4 @@ class Token:
 
     def __str__(self):
 
-        return f"id: {self.uid}, color: {self.color}, process_time: {self.process_time}, extra_features={self.features},trans_time :{self.trans_time}, order: {self.order}, logging: {self.logging}"
+        return f"id: {self.uid}, color: {self.color}, process_time: {self.process_time},trans_time :{self.trans_time}, order: {self.order}, logging: {self.logging}"

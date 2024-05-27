@@ -32,12 +32,13 @@ def agent_test(agent_id="ta01",instance="ta01",dynamic = False ,render_mode="sol
         action, _states = model.predict(obs, action_masks=action_masks)
         obs, reward, terminated, truncated,info= env.step(action)
         
+
         i+=1 
-        print(i)  
+        #print(i)  
         
     end_time = time.time()
     elapsed_time = end_time - start_time    
-    env.render(rank=True,format_="pdf")
+    env.render(zoom=True,rank=True,format_="pdf")
         
     print(f" inference took {elapsed_time} seconds") 
     print(f" Makespan : {env.sim.clock} , number of interactions {env.sim.interaction_counter}")
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     
     
     instance_id="ta01"
-    agent_id="ta01"
+    agent_id="ta01-3000000.0"
 
     samples = [agent_test(agent_id,instance=instance_id) for _ in range(1)]
     print(min(samples),max(samples),sum(samples)/len(samples))

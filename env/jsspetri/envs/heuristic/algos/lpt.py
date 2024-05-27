@@ -1,6 +1,6 @@
 class Lpt():
     def __init__(self):
-        self.label = "LPTX"
+        self.label = "LPT"
         self.type_ = "static"
         
     def __str__(self):

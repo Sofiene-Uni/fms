@@ -138,9 +138,7 @@ def plot_job(jssp,job=0 ,format_="jpg" ,dpi=300):
                     machine_dict["entry_values"].append(entry[0])
                     machine_dict["duration"].append(entry[2])
                     
-                    transport_dict["operation"].append(token.order)
-                    transport_dict["entry_values"].append(entry[0])
-                    transport_dict["duration"].append(token.trans_time)
+                  
           
                     if  entry[0]+entry[2]>job_makespan:
                         job_makespan=entry[0]+entry[2]
@@ -149,6 +147,10 @@ def plot_job(jssp,job=0 ,format_="jpg" ,dpi=300):
                     transit_dict["operation"].append(token.order)
                     transit_dict["entry_values"].append(entry[0])
                     transit_dict["duration"].append(entry[2])
+                    
+                    transport_dict["operation"].append(token.order)
+                    transport_dict["entry_values"].append(entry[0])
+                    transport_dict["duration"].append(token.trans_time)
                     
     
     unique_machines = list(set(machine_dict["machine"]))
@@ -174,7 +176,7 @@ def plot_job(jssp,job=0 ,format_="jpg" ,dpi=300):
 
 
     ax.barh(
-    y=transport_dict["operation"],
+    y=transit_dict["operation"],
     left=transit_dict["entry_values"],
     width=transit_dict["duration"],
     height=0.6,

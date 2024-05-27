@@ -270,6 +270,9 @@ class Simulator(Petri_build):
 
 if __name__ == "__main__":
     
-    pass
+    petri = Simulator("ta01") 
+    
+    print (petri.action_map)  
+    print (petri.action_masks())
     
     

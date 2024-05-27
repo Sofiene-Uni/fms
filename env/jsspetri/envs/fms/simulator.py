@@ -29,18 +29,22 @@ class Simulator(Petri_build):
                  instance_id, 
                  dynamic=False,
                  standby=False,
-                 trans=True):
+                  ):
         """
         Initializes the JSSPSimulator.
 
         Parameters:
             instanceID (str): Identifier for the JSSP instance.
             dynamic (bool): If True, appending new operations is possible, and the termination condition is that all queues are empty.
+
+            trans (bool) : if True the transport time between machines in taken into considiration
+            
         """
         super().__init__(instance_id, 
                          dynamic=dynamic,
                          standby=standby,
-                         trans=trans)
+                         trans=True,
+                         benchmark='BU')
 
         self.clock = 0
         self.interaction_counter = 0
@@ -111,6 +115,26 @@ class Simulator(Petri_build):
         return x
 
 
+
+    def safeguard(self):
+        for machine in self.machines:
+            if machine.token_container:
+                token=machine.token_container[0]
+                if machine.color != token.color[1] :
+                    print(f"error detected { (machine.color, token.color[1])}")
+
+
+    def print_state(self):
+        print("******current state**********") 
+        print( [p.busy for p in self.jobs])
+        print( [p.busy for p in self.machines])
+        print( [len(p.token_container) for p in self.jobs])
+        print([len(p.token_container) for p in self.ready])
+        print ([len(p.token_container) for p in self.machines])
+        print ([len(p.token_container) for p in self.delivery])
+        print (self.action_masks())
+
+
     def is_terminal(self, step=0):
         """
         Checks if the simulation has reached a terminal state.
@@ -121,7 +145,14 @@ class Simulator(Petri_build):
         empty_queue = all(len(p.token_container) == 0 for p in self.jobs)
         empty_transit = all(len(p.token_container) == 0 for p in self.ready) 
         empty_machines = all(len(p.token_container) == 0 for p in self.machines) 
-       
+        
+        #self.print_state()
+        
+        
+        
+        
+        
+
         return empty_queue and empty_transit  and empty_machines 
     
   
@@ -143,17 +174,14 @@ class Simulator(Petri_build):
                 ready =  self.ready[origin].busy    # a token is ready to be allocated 
                 color = token.color[1] == self.machines[destination].color
                 machine = not self.machines[destination].busy
-                
                 valid =  color and machine and ready 
                 
         return valid 
                 
             
-
     def action_masks(self):
         actions = range(len (self.action_map))
         enabled_mask = list(map (self.valid_action, actions))
-
         return enabled_mask
         
 
@@ -194,12 +222,7 @@ class Simulator(Petri_build):
 
         return True
 
-    def safeguard(self):
-        for machine in self.machines:
-            if machine.token_container:
-                token=machine.token_container[0]
-                if machine.color != token.color[1] :
-                    print(f"error detected { (machine.color, token.color[1])}")
+  
                    
 
     def fire_controlled(self, action):
@@ -277,11 +300,24 @@ class Simulator(Petri_build):
 
 if __name__ == "__main__":
     
-    petri = Simulator("ta01") 
+    petri = Simulator("bu01") 
     
-    print (petri.action_map)  
+    
+    print( [len(p.token_container) for p in petri.jobs])
+    print([len(p.token_container) for p in petri.ready])
+    print ([len(p.token_container) for p in petri.machines])
+    
+    
     print (petri.action_masks())
+    print (petri.action_map) 
+      
     
+    # for job in  petri.jobs :
+    #     for op in job.token_container :
+    #         print(op)
+            
+    
+  
 
     
 
