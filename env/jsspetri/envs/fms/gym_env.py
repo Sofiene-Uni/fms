@@ -2,6 +2,7 @@ import numpy as np
 from gymnasium import Env
 from gymnasium import spaces
 
+from jsspetri.envs.fms.simulator_agv import Simulator_AGV
 from jsspetri.envs.fms.simulator import Simulator
 from jsspetri.render.plot_fms import plot_solution, plot_job
 from jsspetri.utils.obs_fms import get_obs
@@ -15,13 +16,12 @@ class FmsEnv(Env):
 
     def __init__(self, 
                  instance_id :str ,
-                 benchmark = "Taillard",
-                 trans = True,
-                 trans_layout = None,
                  render_mode: bool =None,
                  observation_depth:int =1, 
                  dynamic: bool=False,
                  standby:bool=False,
+                 size=(None,None),
+                 n_agv=0,
               
                  ):
         """
@@ -38,14 +38,18 @@ class FmsEnv(Env):
         
         self.dynamic=dynamic
         self.instance_id=instance_id
+        
+        if n_agv==0:
+            self.sim = Simulator(self.instance_id,dynamic=self.dynamic,standby=standby, size=size )
+            
+        else :
+            self.sim = Simulator_AGV(self.instance_id,dynamic=self.dynamic,standby=standby, size=size ,n_agv=n_agv)
 
-        self.sim = Simulator(self.instance_id, benchmark = benchmark, trans = trans, trans_layout=trans_layout,dynamic=self.dynamic,standby=standby)
         self.observation_depth = min(observation_depth, self.sim.n_machines)
    
-         
         observation_size= 3 * self.sim.n_machines + 2 * (self.sim.n_jobs * self.observation_depth)  
         self.observation_space= spaces.Box(low=-1, high=self.sim.max_bound,shape=(observation_size,),dtype=np.int64)
-        self.action_space = spaces.Discrete(len (self.sim.jobs)*len(self.sim.machines)+len (self.sim.jobs))  # select and allocate combinations
+        self.action_space = spaces.Discrete(len(self.sim.machines)+len (self.sim.jobs)*+len (self.sim.agvs))  # select and allocate combinations
       
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         self.render_mode = render_mode
@@ -63,7 +67,7 @@ class FmsEnv(Env):
 
         return observation, info
 
-    def reward(self,action):
+    def reward(self,terminal):
         """
         Calculate the reward.
         Parameters:
@@ -71,9 +75,15 @@ class FmsEnv(Env):
         Returns:
             Any: Calculated reward .
         """
+
+        if terminal :
+            return -self.sim.clock
+        else :
+            return 0
         
-        # return self.sim.utilization_reward()
-        return self.sim.makespan_reward()
+        
+       # return self.sim.utilization_reward()
+    
 
     def action_masks(self):
         """
@@ -94,9 +104,9 @@ class FmsEnv(Env):
         
 
         fired = self.sim.interact(action)  
-        reward = self.reward(action)
         observation = get_obs(self)
         terminated= self.sim.is_terminal()
+        reward = self.reward(terminated)
         info = self._get_info(reward,fired,terminated)
         
         return observation, reward, terminated, False, info
@@ -109,7 +119,7 @@ class FmsEnv(Env):
              
             if zoom :
                 for i in range (self.sim.n_jobs):
-                    plot_job(self.sim,job=i,format_=format_,dpi=dpi)
+                    plot_job(self.sim,job=i,format_=format_,dpi=dpi,n_agv=self.sim.n_agv)
                     
             plot_solution(self.sim,show_rank=rank,format_=format_,dpi=dpi)
        
@@ -127,10 +137,14 @@ class FmsEnv(Env):
 
 if __name__ == "__main__":
     
-    env=FmsEnv("ta01",dynamic=False)
+    instance="bu01"
+    agvs=2
+    dynamic=False
+    size=(6,4)
     
-    print (env.action_space)
- 
+    env=FmsEnv(instance_id=instance,dynamic=dynamic,size=size,n_agv=agvs)
+    
+
   
     
     

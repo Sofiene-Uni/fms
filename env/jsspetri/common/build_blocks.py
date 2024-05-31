@@ -97,10 +97,8 @@ class Transition:
         self.color = color
         self.enabled = False   
         
-        
         self.parents = []
         self.children = []
-        
 
 
     def add_arc(self, node, parent=True):

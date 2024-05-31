@@ -7,7 +7,7 @@ from sb3_contrib.common.maskable.utils import get_action_masks
 #%% create environement 
 
 
-def agent_test(agent_id="ta01-100000.0",instance="ta01", benchmark = "Taillard", trans = True, trans_layout = None, dynamic = False ,render_mode="solution"):
+def agent_test(agent_id="ta01",instance="ta01", benchmark = "Taillard", trans = True, trans_layout = None, dynamic = False ,render_mode="solution"):
     
     # local_agent = f"agents/MaskablePPO-{agent_id}.zip"
     local_agent = f"agents/MaskablePPO-{agent_id}.zip"
@@ -51,16 +51,9 @@ def agent_test(agent_id="ta01-100000.0",instance="ta01", benchmark = "Taillard",
 
 if __name__ == "__main__":
     
-    
-    # instance_id="ta02"
-    # benchmark = "Taillard"
-    # trans = True
-    # trans_layout = 'trans_15'
-    # agent_id="ta02-100000"
-
 
     instance_id = "bu01"
-    agent_id = "bu01-100000"
+    agent_id = "bu01"
     benchmark = "BU"
     trans_layout = "trans_4_1"
     trans = True

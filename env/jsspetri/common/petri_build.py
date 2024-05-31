@@ -18,12 +18,11 @@ class Petri_build:
     """
 
     def __init__(self, instance_id,
-                 benchmark = "Taillard",
-                 trans_layout = None,
                  dynamic=False,
                  standby=False,
-                 trans=False,
-                 max_size=(100,20)):
+                 size=(100,20),
+                 n_agv=0,
+                 benchmark='Taillard'):
         """
         Initialize the Petri net with a JSSP instance.
         Parameters:
@@ -31,27 +30,23 @@ class Petri_build:
         """
         self.dynamic=dynamic
         self.standby=standby
-        self.trans=trans
-        self.benchmark = benchmark
-        self.trans_layout = trans_layout
 
         self.instance_id = instance_id
-        self.instance, specs = load_instance(instance_id = self.instance_id, benchmark = self.benchmark)
+        self.instance, specs = load_instance(self.instance_id,benchmark=benchmark)    
         self.n_jobs, self.n_machines, self.n_features,self.max_bound = specs
+        self.n_agv=n_agv
         
-        if self.trans :  
-            self.tran_durations = load_trans(self.n_machines,
-                                             benchmark = self.benchmark,
-                                             trans_layout = self.trans_layout)
-           
+        if self.n_agv !=0 :  
+            self.tran_durations = load_trans(self.n_machines,benchmark=benchmark)
 
         self.places = {}
         self.transitions = {}
         
         if  self.dynamic : 
-            self.n_jobs,self.n_machines=max_size
+            self.n_jobs,self.n_machines=size
           
         self.create_petri()
+        self.plot_net()
             
     def __str__(self):
         """
@@ -107,40 +102,40 @@ class Petri_build:
             for parent, child in zip(parent_nodes, child_nodes):
                 parent.add_arc(child, parent=False)
                 child.add_arc(parent, parent=True)
+                
 
     def add_tokens(self):
         """
         Add tokens to the Petri net.
         Tokens represent job operations .
         """
-
+        
         def cal_time(origin,destintion):
 
             if origin is not destintion : # change of machine
                 try :
-                    trans_time=int (self.tran_durations[origin][destintion])
+                    trans_time=int (self.tran_durations[origin][destintion])  
                 except :
                     trans_time=0
             return trans_time
-
+        
 
         for job, uid in enumerate(self.filter_nodes("job")):
-            current_machine=None
-            try : # only add token to the operation in the instance  (for dynamic variant )
-                for i,(machine,features) in enumerate (self.instance[job].items()) :
-
-                    trans_time= cal_time(origin=current_machine,destintion=machine)
-
+            current_machine=None            
+            try : # only add token to the operation in the instance  (for dynamic variant ) 
+                for i,(machine,features) in enumerate (self.instance[job].items()) : 
+                    
+                    trans_time= cal_time(origin=current_machine,destintion=machine) 
+                    
                     self.places[uid].token_container.append( Token(initial_place=uid, color=(job, machine),
                                                                    features=features ,
                                                                    order=i ,
-                                                                   trans_time= trans_time ))
+                                                                   trans_time= trans_time ))  
                     current_machine = copy.copy(machine)
-
-            except :
-                pass # the reserve jobs are empty
-
     
+            except :
+                pass # the reserve jobs are empty 
+        
     
     def filter_nodes(self, node_type):
         """
@@ -166,24 +161,52 @@ class Petri_build:
 
     def create_petri(self):
         """Create the Petri net structure, adding nodes, connections, and tokens."""
-        nodes_layers = [
-            (True, "job", self.n_jobs),
-            (False, "select", self.n_jobs),
-            (True, "ready", self.n_jobs),
-            (False, "allocate", self.n_machines),
-            (True, "machine", self.n_machines),
-            (False, "finish_op", self.n_machines),
-            (True, "finished_ops", self.n_machines),
-        ]
+        
+        if self.n_agv == 0:
+         
+            nodes_layers = [
+                (True, "job", self.n_jobs),
+                (False, "select", self.n_jobs),
+                (True, "ready", self.n_jobs),
+                (False, "allocate", self.n_machines),
+                (True, "machine", self.n_machines),
+                (False, "finish_op", self.n_machines),
+                (True, "finished_ops", self.n_machines),
+            ]
 
-        layers_to_connect = [
-            ("job", "select", "p2t", False),
-            ("select", "ready", "t2p", False),
-            ("ready", "allocate", "p2t", True),
-            ("allocate", "machine", "t2p", False),
-            ("machine", "finish_op", "p2t", False),
-            ("finish_op", "finished_ops", "t2p", False),
-        ]
+            layers_to_connect = [
+                ("job", "select", "p2t", False),
+                ("select", "ready", "t2p", False),
+                ("ready", "allocate", "p2t", True),
+                ("allocate", "machine", "t2p", False),
+                ("machine", "finish_op", "p2t", False),
+                ("finish_op", "finished_ops", "t2p", False),
+               ]
+            
+            
+        else :   #AGV automated guided vehicule
+            nodes_layers = [
+                (True, "job", self.n_jobs),
+                (False, "select", self.n_jobs),
+                (True , "agv",self.n_agv) , 
+                (False , "transport",self.n_machines) ,   
+                (True, "ready", self.n_machines),
+                (False, "allocate", self.n_machines),
+                (True, "machine", self.n_machines),
+                (False, "finish_op", self.n_machines),
+                (True, "finished_ops", self.n_machines),
+            ]
+    
+            layers_to_connect = [
+                ("job", "select", "p2t", False),
+                ("select", "agv", "t2p", True),
+                ("agv", "transport", "p2t", True),
+                ("transport","ready","t2p", False),
+                ("ready", "allocate", "p2t", False),
+                ("allocate", "machine", "t2p", False),
+                ("machine", "finish_op", "p2t", False),
+                ("finish_op", "finished_ops", "t2p", False),
+            ]
 
         # Add nodes: places and transitions
         for is_place, node_type, number in nodes_layers:
@@ -202,22 +225,45 @@ class Petri_build:
         # Add jobs tokens
         self.add_tokens()
 
-        print (f"JSSP {self.instance_id}: {self.n_jobs} jobs X {self.n_machines} machines, dynamic Mode: {self.dynamic} ,Standby: {self.standby} ,Transport :{self.trans}")
+        print (f"JSSP {self.instance_id}: {self.n_jobs} jobs X {self.n_machines} machines, AGVs:{self.n_agv} , dynamic Mode: {self.dynamic} ,Standby: {self.standby}")
         
         
+    def plot_net(self)  :
+        import graphviz
+        from IPython.display import display, Image
+
+        dot = graphviz.Digraph(comment='Petri Net')
+        
+        # Add places
+        for place in self.places.values():
+            dot.node(place.uid, shape='circle', label=place.label, style='filled', fillcolor='lightgrey',fontsize='10')
+        
+        # Add transitions
+        for transition in self.transitions.values():
+            dot.node(transition.uid, shape='box', label=transition.label, style='filled', fillcolor='lightblue',fontsize='10')
+        
+        # Add arcs
+        for place in self.places.values():
+
+            for child in place.children:
+                dot.edge(place.uid, child.uid)
+ 
+        for transition in self.transitions.values():
+
+            for child in transition.children:
+                dot.edge(transition.uid,child.uid)
+        
+        dot_data = dot.pipe(format='png')
+        display(Image(dot_data))
    
 # %% Test
 if __name__ == "__main__":
     
     benchmark='BU'
     instance_id="bu01"
-
-    petri=Petri_build(instance_id,trans=True , benchmark=benchmark)
+    n_agv= 2
+    
+    petri=Petri_build(instance_id, benchmark=benchmark ,n_agv=n_agv)
     
 
-
-
-
- 
-
-
+    
