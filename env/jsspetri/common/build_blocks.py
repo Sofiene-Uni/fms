@@ -131,7 +131,7 @@ class Token:
         logging (dict): Dictionary for logging entry time, leave time, and elapsed time for each place.
     """
 
-    def __init__(self, initial_place, color=(None, None), features=[] ,order=0 , trans_time=0 ):
+    def __init__(self, initial_place, color=(None, None),type_="op", order=0,process_time=0  , trans_time=0 ):
         """
         Initialize a token.
 
@@ -141,19 +141,19 @@ class Token:
             order (int): Order of the token.
             process_time (int): Time taken for the token's process.
             transportation_time (int) : the time the operation take to move from  machine to another if not given = 0
-            features (list) : a place holder for other features energy , cost , ...
             logging (dict) : a logging of every place the token went throught 
         """
         
         self.uid = IdGen.generate_uid()
         self.order = order
         self.color = color
+       
+        self.type=type_
         self.trans_time=trans_time
-        self.process_time = features[0]
-        self.features=features[1:]
+        self.process_time = process_time
         self.logging = {initial_place: [0, 0, 0]}  # entry time, leave time, elapsed time
    
 
     def __str__(self):
 
-        return f"id: {self.uid}, color: {self.color}, process_time: {self.process_time},trans_time :{self.trans_time}, order: {self.order}, logging: {self.logging}"
+        return f"id: {self.uid}, color: {self.color},type: {self.type}, order: {self.order}, process_time: {self.process_time},trans_time :{self.trans_time}, logging: {self.logging}"

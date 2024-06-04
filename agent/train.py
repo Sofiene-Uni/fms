@@ -9,22 +9,21 @@ from datetime import datetime
 #tensorboard_log="logs"
 
 
-def train_jssp(instance_id, benchmark = 'Taillard', trans = True, trans_layout = None, timesteps=100000,dynamic=False):
+def train_jssp(instance_id, timesteps=100000,dynamic=False,size=(None,None),n_agv=2):
     env = gym.make("jsspetri-fms-v0",
                    render_mode="solution",
                    instance_id=instance_id,
-                   benchmark=benchmark,
-                   trans_layout = trans_layout,
-                   trans= trans,
                    dynamic=dynamic,
+                   size=size,
+                   n_agv=n_agv
     ).unwrapped
     
     
-    model = MaskablePPO("MlpPolicy", env, verbose=1,seed=101,tensorboard_log="logs")
+    model = MaskablePPO("MlpPolicy", env, verbose=1,seed=101)
 
     start_time = time.time()  
     model.learn(total_timesteps=timesteps)
-    end_time = time.time()
+    end_time = time.time()  
     elapsed_time = end_time - start_time  
     current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M")
     
@@ -38,26 +37,19 @@ def train_jssp(instance_id, benchmark = 'Taillard', trans = True, trans_layout =
             info_file.write(f" {current_datetime} -The total {instance_id} training time (seconds): {elapsed_time}\n")
       
     print(f"Training took {elapsed_time} seconds")
-    model.save(f"agents/MaskablePPO-{instance_id}-{timesteps}.zip")
+    model.save(f"agents/MaskablePPO-{instance_id}-{n_agv}-{timesteps}.zip")
 
 def main():
+    
+ 
+    instances= ["bu01"]
+    timesteps = 1e5
+    dynamic=False
+    size=(6,4)
+    agv=5
 
-    #instances= ["ta11","ta21","ta61","ta01"]
-    # instances= ["ta01"]
-    # timesteps = 100000
-    # benchmark = "Taillard"
-    #
-    # for instance_id  in instances :
-    #     train_jssp(instance_id, benchmark=benchmark, trans_layout='trans_15', timesteps=timesteps)
-    instances = ["bu01"]
-    timesteps = 100000
-    benchmark = "BU"
-    trans = True
-    trans_lay = 'trans_4_1'
-
-    for instance_id in instances:
-        train_jssp(instance_id, benchmark=benchmark, trans = trans, trans_layout=trans_lay, timesteps=timesteps)
-
+    for instance_id  in instances :
+        train_jssp(instance_id, timesteps=timesteps,dynamic=dynamic,size=size ,n_agv=agv)
 
 if __name__ == "__main__":
     main()

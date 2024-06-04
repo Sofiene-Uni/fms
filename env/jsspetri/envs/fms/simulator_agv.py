@@ -73,6 +73,7 @@ class Simulator_AGV(Petri_build):
         self.agvs = [p for p in self.places.values() if p.uid in self.filter_nodes("agv")]
         self.buffer = [p for p in self.transitions.values() if p.uid in self.filter_nodes("transport")]
         self.ready = [p for p in self.places.values() if p.uid in self.filter_nodes("ready")]
+        self.store = [p for p in self.places.values() if p.uid in self.filter_nodes("store")]
         self.allocate = [t for t in self.transitions.values() if t.uid in self.filter_nodes("allocate")]
         self.machines = [p for p in self.places.values() if p.uid in self.filter_nodes("machine")]
         self.deliver = [t for t in self.transitions.values() if t.uid in self.filter_nodes("finish_op")]
@@ -103,11 +104,9 @@ class Simulator_AGV(Petri_build):
             for avg in range (n_agv):
                 mapping_dict[index] = (job,avg)
                 index+=1
-   
          return mapping_dict
-     
-        
-    
+
+
     def utilization_reward(self):
         """
         Calculates the utilization reward.
@@ -134,7 +133,7 @@ class Simulator_AGV(Petri_build):
         print("")
         print(f"jobs:     {[len(p.token_container) for p in self.jobs]}" )
         print( f"agv:      {[len(p.token_container) for p in self.agvs]}")
-        print(f"ready:    {[len(p.token_container) for p in self.ready]}")
+        print(f"ready:    {[len(p.token_container) for p in self.ready]}",f"store:{[len(p.token_container) for p in self.store]}")
         print(f"machines: {[len(p.token_container) for p in self.machines]}")
         print (f"delivery: {[len(p.token_container) for p in self.delivery]}")
         print("")
@@ -146,9 +145,7 @@ class Simulator_AGV(Petri_build):
         print("")
         print (f"action mask : {self.action_masks()}")
         
-
         
-
     def is_terminal(self, step=0):
         """
         Checks if the simulation has reached a terminal state.
@@ -179,7 +176,6 @@ class Simulator_AGV(Petri_build):
                 valid =  color and machine and ready 
                 
                 
-
         else  :   #transport 
             if self.jobs[origin].token_container  and not self.jobs[origin].busy and not self.agvs[destination].busy :
                 valid =True   # enabled if a token is available and the job is not being processed 
@@ -210,7 +206,6 @@ class Simulator_AGV(Petri_build):
             else :
                 place.busy=False
                      
-
 
     def transfer_token(self, origin, destination, clock=0):
         """
@@ -279,17 +274,26 @@ class Simulator_AGV(Petri_build):
                 _, _, elapsed_time = list(token.logging.items())[-1][-1]
                 
                 if  place.type == "agv" and elapsed_time>= token.trans_time:
-                    self.transfer_token(place, self.ready[token.color[1]], self.clock)
-                    self.agvs[token.current_place].busy = False   #AGV is available 
+                    
+                    if token.type=="op":
+                        self.transfer_token(place, self.ready[token.color[1]], self.clock)
+                        self.agvs[token.current_place].busy = False   #AGV is available 
+                        
+                    elif token.type=="u" : # unload token 
+                        self.transfer_token(place, self.store[0], self.clock)
+                        self.agvs[token.current_place].busy = False   #AGV is available 
+                        self.jobs[token.color[0]].busy = False    #Job is available 
+                        
               
                 elif  place.type == "machine" and elapsed_time>= token.process_time  :    
                     self.transfer_token(place, self.delivery[place.color], self.clock)
                     self.jobs[token.color[0]].busy = False
                     self.machines[token.color[1]].busy = False
                     
-        self.delivery_history[self.clock] = [token for place in self.delivery for token in place.token_container]  
+        self.delivery_history[self.clock] = [token for place in self.delivery for token in place.token_container] + [token for place in self.store for token in place.token_container]
         
-        self.time_tick()          
+        if sum(self.action_masks()) == 0:
+            self.time_tick()          
       
         
   
@@ -314,12 +318,16 @@ class Simulator_AGV(Petri_build):
 if __name__ == "__main__":
     
     petri = Simulator_AGV("bu01") 
-    print(petri.action_map)
     petri.print_state()
     
     
     for token in petri.jobs[0].token_container:
         print(token)
+        
+
+        
+        
+    
 
   
 

@@ -1,41 +1,7 @@
 import os
 import pandas as pd
 
-def load_instance_raw(instance_id,benchmark):
-    """
-    Load raw instance data from a file.
 
-    Parameters:
-        instance_id (str): The identifier of the instance to load.
-
-    Returns:
-        pandas.DataFrame: The raw instance data.
-        tuple: A tuple containing the number of jobs, number of machines, and number of features.
-    """
-               
-    instance_path = f"{os.path.dirname(__file__)}\\instances\\{benchmark}\\{instance_id}"
-    data = []
-    
-
-    try:
-        with open(instance_path, 'r') as file:
-            for line in file:
-                elements = line.strip().split()
-                data.append(elements)
-            print(f" {benchmark} Instance '{instance_id}' is loaded.")
-
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-    
-    raw_instance = pd.DataFrame(data)
-    
-
-    n_job, n_machine = tuple(raw_instance.iloc[0].dropna().astype(int))
-    n_features = int((raw_instance.shape[1] - (n_machine * 2)) / n_machine) + 1
-    raw_instance = raw_instance.drop(0).apply(pd.to_numeric, errors='coerce')
-    
-    max_bound=raw_instance.max().max()
-    return raw_instance, (n_job, n_machine, n_features,max_bound)
 
 def load_instance(instance_id,benchmark="Taillard"):
     
@@ -54,22 +20,38 @@ def load_instance(instance_id,benchmark="Taillard"):
     if benchmark not in ["Taillard", "BU", "Demirkol"]:
         raise ValueError("Benchmark must be one of: 'Taillard', 'Taillard_random', 'Demirkol'")
     
-    raw_instance, (n_job, n_machine, n_features, max_bound) = load_instance_raw(instance_id, benchmark)
-    instance = []
+    instance_path = f"{os.path.dirname(__file__)}\\instances\\{benchmark}\\{instance_id}"
+    data = []
     
-    for job_index in range(n_job):   
-       job = {}
-       
-       for op_index in range(0, raw_instance.shape[1], n_features + 1):
-           key = raw_instance.iloc[job_index, op_index]
-           
-           if not pd.isna(key):
-               values = list(raw_instance.iloc[job_index, op_index + 1: op_index + n_features + 1])
-               job[int (key)] = values
 
-       instance.append(job)
-          
-    return instance, (n_job, n_machine, n_features, max_bound)
+    try:
+        with open(instance_path, 'r') as file:
+            for line in file:
+                elements = line.strip().split()
+                data.append(elements)
+            print(f" {benchmark} Instance '{instance_id}' is loaded.")
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+    
+    instance_raw = pd.DataFrame(data)
+    
+    n_job, n_machine = tuple(instance_raw.iloc[0].dropna().astype(int))
+    instance_raw = instance_raw.drop(0).apply(pd.to_numeric, errors='coerce')
+    
+    max_bound=instance_raw.max().max()
+    
+    
+    instance=[]
+    for index, row in instance_raw.iterrows():
+        job=[]
+        for i in range(0, len(row)-1, 2):
+            if not pd.isna(row[i]) and not pd.isna(row[i+1]):
+                job.append((int (row[i]), row[i+1])) 
+                
+        instance.append(job)
+
+    return instance, (n_job, n_machine, max_bound)
 
 
 
@@ -120,9 +102,14 @@ if __name__ == "__main__":
      instance_id= "bu01"
      
      instance,size = load_instance(instance_id,benchmark="BU")
-     n_job, n_machine, n_features ,max_bound=size
+     n_job, n_machine,max_bound=size
      
-     print(instance)
+
+     
+                 
+         
+
+  
 
      
      
