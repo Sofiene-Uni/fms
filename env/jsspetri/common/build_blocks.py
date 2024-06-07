@@ -118,7 +118,6 @@ class Transition:
         return f"Transition name: {self.label}, type: {self.type}, color: {self.color}, parents: {self.parents}, children: {self.children}, id: {self.uid}"
 
 
-
 class Token:
     """
     Class representing a token in a Petri net.
@@ -147,7 +146,6 @@ class Token:
         self.uid = IdGen.generate_uid()
         self.order = order
         self.color = color
-       
         self.type=type_
         self.trans_time=trans_time
         self.process_time = process_time

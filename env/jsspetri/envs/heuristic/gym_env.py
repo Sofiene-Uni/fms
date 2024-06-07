@@ -3,7 +3,7 @@ from gymnasium import Env
 from gymnasium import spaces
 
 from jsspetri.envs.heuristic.simulator import Simulator
-from jsspetri.envs.heuristic.algos import heuristic_index
+from jsspetri.envs.heuristic.algos import label_index,index_label
 
 
 from jsspetri.render.plot_mono import plot_solution
@@ -22,7 +22,6 @@ class HeuristicEnv(Env):
                  render_mode: bool =None,
                  observation_depth:int =1, 
                  dynamic: bool=False,
-                 standby:bool=False,
                  elite= None,
                 
                  ):
@@ -40,7 +39,7 @@ class HeuristicEnv(Env):
         self.dynamic=dynamic
         self.instance_id=instance_id
  
-        self.sim = Simulator(self.instance_id,dynamic=self.dynamic,standby=standby , elite=elite)
+        self.sim = Simulator(self.instance_id,dynamic=self.dynamic, elite=elite)
         self.observation_depth = min(observation_depth, self.sim.n_machines)
  
         observation_size= 3 * self.sim.n_machines + 2 * (self.sim.n_jobs * self.observation_depth)  
@@ -113,8 +112,11 @@ class HeuristicEnv(Env):
         """
         return {"Reward": reward,"Fired":fired ,"Terminated": terminated}
     
-    def heuristic_index(self,heuristic_label):
-        return  heuristic_index(heuristic_label)
+    def label_index(self,label):
+        return  label_index(label)
+    
+    def index_label(self,index):
+        return  index_label(index)
     
     
 if __name__ == "__main__":

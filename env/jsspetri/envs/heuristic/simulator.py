@@ -30,7 +30,6 @@ class Simulator(Petri_build):
     def __init__(self, 
                  instance_id, 
                  dynamic=False,
-                 standby=False,
                  elite =None
                  ):
         """
@@ -44,7 +43,7 @@ class Simulator(Petri_build):
         """
         super().__init__(instance_id, 
                          dynamic=dynamic,
-                         standby=standby)
+                        )
 
         self.clock = 0
         self.interaction_counter = 0
@@ -55,6 +54,21 @@ class Simulator(Petri_build):
         self.heuristics=init_heuristics(elite)
         self.action_map = self.action_mapping(self.n_machines, self.n_jobs)
         
+    def print_state(self):
+        print(f"Clock: {self.clock}")
+        print("******current state**********") 
+        print("")
+        print(f"jobs:     {[len(p.token_container) for p in self.jobs]}" )
+        print(f"ready:    {[len(p.token_container) for p in self.ready]}")
+        print(f"machines: {[len(p.token_container) for p in self.machines]}")
+        print (f"delivery: {[len(p.token_container) for p in self.delivery]}")
+        print("")
+        print(f"jobs busy:     {[p.busy for p in self.jobs]}" )
+        print(f"ready busy: {[p.busy for p in self.ready]}")
+        print(f"machines busy: {[p.busy for p in self.machines]}")
+
+        print("")
+        print (f"action mask : {self.action_masks()}")
     
 
     def petri_reset(self):
@@ -97,10 +111,6 @@ class Simulator(Petri_build):
                  tuples.append(tuple_entry)
                  index = len(tuples) - 1
                  mapping_dict[index] = tuple_entry
-                 
-         if self.standby :
-             idle = {len(mapping_dict.keys()): (None,None)}
-             mapping_dict.update(idle)
 
          return mapping_dict
     
@@ -214,10 +224,8 @@ class Simulator(Petri_build):
         self.interaction_counter += 1
         job_idx, machine_idx = self.action_map[int(action)] 
         
-        if job_idx == None :
-            return True  #handle standby action
         
-        elif action in [index for index, value in enumerate(self.action_masks()) if value]: 
+        if action in [index for index, value in enumerate(self.action_masks()) if value]: 
             
             selected= self.transfer_token(self.jobs[job_idx], self.ready[job_idx], self.clock)    
             allocated = self.transfer_token(self.ready[job_idx], self.machines[machine_idx], self.clock)  
@@ -263,7 +271,7 @@ class Simulator(Petri_build):
         action =heuristic.decide(self)
         fired=self.fire_allocate(action)
         
-        while sum(self.action_masks()) == int (self.standby):
+        while sum(self.action_masks()) == 0:
             self.fire_timed()
             if self.is_terminal():
                 break
@@ -275,4 +283,7 @@ if __name__ == "__main__":
   elite=None
   instance_id="ta01"
   sim = Simulator(instance_id,elite=elite)
+  sim.print_state()
+  
+  
   

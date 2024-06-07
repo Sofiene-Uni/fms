@@ -9,10 +9,9 @@ class Lpt():
     def decide(self, sim):
         def get_processing_time(job):
             total_time = 0
-            original_job =  sim.instance[job]
-            for index,(machine,process_time) in enumerate (original_job):
-                total_time += process_time
-    
+            original_job = sim.instance[job]
+            for op in original_job:
+                total_time += op[1]
             return total_time
         
         enabled_action = [index for index, value in enumerate(sim.action_masks()) if value]  

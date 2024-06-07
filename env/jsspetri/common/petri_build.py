@@ -19,7 +19,6 @@ class Petri_build:
 
     def __init__(self, instance_id,
                  dynamic=False,
-                 standby=False,
                  size=(100,20),
                  n_agv=0,
                  benchmark='Taillard'):
@@ -29,8 +28,6 @@ class Petri_build:
             instance_id (str): The ID of the JSSP instance.
         """
         self.dynamic=dynamic
-        self.standby=standby
-
         self.instance_id = instance_id
         self.instance, specs = load_instance(self.instance_id,benchmark=benchmark)    
         self.n_jobs, self.n_machines, self.max_bound = specs
@@ -40,9 +37,9 @@ class Petri_build:
         self.places = {}
         self.transitions = {}
         
-        if self.n_agv !=0 :  
+        if self.n_agv > 0 :  
             self.tran_durations = load_trans(self.n_machines,benchmark=benchmark)
-            self.create_petri_agv(LU=True)
+            self.create_petri_agv()
         else :
             self.create_petri()
 
@@ -124,31 +121,29 @@ class Petri_build:
                 child.add_arc(parent, parent=True)
                 
 
-    def add_tokens(self,LU=False,):
+    def add_tokens(self,LU=False):
         """
         Add tokens to the Petri net.
         Tokens represent job operations .
         """
         
-        
-        def cal_time(origin,destination):
 
-            try :
+        def cal_time(origin,destination):
+            try : 
                 
+                trans_time =0
                 if origin == None: #load
                     trans_time=int (self.tran_durations.iloc[0][destination+1])
-    
                 elif destination == self.n_machines: #Unload
                      trans_time=int (self.tran_durations.iloc[origin+1][0])
-    
                 elif origin is not destination : # change of machine
                     trans_time=int (self.tran_durations.iloc[origin+1][destination+1])
-                    
                 return trans_time
             
             except : 
                 return 0
                 
+            
             
         for job, uid in enumerate(self.filter_nodes("job")):  
             current_machine=None  
@@ -161,15 +156,15 @@ class Petri_build:
                                                                                process_time=time ,
                                                                                order=i ,
                                                                                trans_time= cal_time(current_machine,machine)))  
-                    
+
                     current_machine = copy.copy(machine)
-                                
-                #add the unload token 
-                self.places[uid].token_container.append( Token(initial_place=uid, color=(job, self.n_machines),
-                                                               process_time=time,
-                                                               order=i+1 ,
-                                                               trans_time= cal_time(current_machine,self.n_machines),
-                                                               type_="u"))         
+       
+                if  LU : #add the unload token   
+                    self.places[uid].token_container.append( Token(initial_place=uid, color=(job, self.n_machines),
+                                                                   process_time=time,
+                                                                   order=i+1 ,
+                                                                   trans_time= cal_time(current_machine,self.n_machines),
+                                                                   type_="u"))         
             except : 
                 pass # the reserve jobs are empty 
 
@@ -197,7 +192,7 @@ class Petri_build:
     
     
     def create_petri_agv(self,LU=True):
-        
+
         nodes_layers = [
             (True, "job", self.n_jobs),
             (False, "select", self.n_jobs),
@@ -236,11 +231,13 @@ class Petri_build:
             self.add_nodes_layer(is_place=False, node_type="lu", number=1,color=self.n_machines)
             self.add_connection("agv", "lu", "p2t", full_connect=True)
             self.add_connection("lu", "store", "t2p", full_connect=False)
+            
+            
         # Add jobs tokens
         self.add_tokens(LU)
         
         
-        print (f"JSSP {self.instance_id}: {self.n_jobs} jobs X {self.n_machines} machines, AGVs:{self.n_agv} , dynamic Mode: {self.dynamic} ,Standby: {self.standby}")
+        print (f"JSSP {self.instance_id}: {self.n_jobs} jobs X {self.n_machines} machines, AGVs:{self.n_agv} , dynamic Mode: {self.dynamic}")
         
         
 
@@ -278,7 +275,7 @@ class Petri_build:
         # Add jobs tokens
         self.add_tokens()
 
-        print (f"JSSP {self.instance_id}: {self.n_jobs} jobs X {self.n_machines} machines, AGVs:{self.n_agv} , dynamic Mode: {self.dynamic} ,Standby: {self.standby}")
+        print (f"JSSP {self.instance_id}: {self.n_jobs} jobs X {self.n_machines} machines, AGVs:{self.n_agv} , dynamic Mode: {self.dynamic}")
         
         
     def plot_net(self)  :

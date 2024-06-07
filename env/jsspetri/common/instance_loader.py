@@ -4,8 +4,6 @@ import pandas as pd
 
 
 def load_instance(instance_id,benchmark="Taillard"):
-    
-
     """
     Load instance data from a file and organize it into a structured format.
 
@@ -103,14 +101,7 @@ if __name__ == "__main__":
      
      instance,size = load_instance(instance_id,benchmark="BU")
      n_job, n_machine,max_bound=size
-     
-
-     
-                 
-         
-
-  
-
+ 
      
      
      

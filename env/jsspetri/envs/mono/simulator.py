@@ -28,7 +28,7 @@ class Simulator(Petri_build):
     def __init__(self, 
                  instance_id, 
                  dynamic=False,
-                 standby=False):
+                 ):
         """
         Initializes the JSSPSimulator.
 
@@ -38,7 +38,7 @@ class Simulator(Petri_build):
         """
         super().__init__(instance_id, 
                          dynamic=dynamic,
-                         standby=standby)
+                         )
 
         self.clock = 0
         self.interaction_counter = 0
@@ -90,9 +90,7 @@ class Simulator(Petri_build):
                  index = len(tuples) - 1
                  mapping_dict[index] = tuple_entry
                  
-         if self.standby :
-             idle = {len(mapping_dict.keys()): (None,None)}
-             mapping_dict.update(idle)
+      
 
          return mapping_dict
     
@@ -209,10 +207,9 @@ class Simulator(Petri_build):
         self.interaction_counter += 1
         job_idx, machine_idx = self.action_map[int(action)] 
         
-        if job_idx == None :
-            return True  #handle standby action
         
-        elif action in [index for index, value in enumerate(self.action_masks()) if value]: 
+        
+        if action in [index for index, value in enumerate(self.action_masks()) if value]: 
             
             selected= self.transfer_token(self.jobs[job_idx], self.ready[job_idx], self.clock)    
             allocated = self.transfer_token(self.ready[job_idx], self.machines[machine_idx], self.clock)   
@@ -256,12 +253,9 @@ class Simulator(Petri_build):
         """
 
         fired=self.fire_allocate(action)
-        #allocation does not advance time (decision step) ,-choosen standby does  
-        if action == list(self.action_map.keys())[-1] and self.standby:
-            self.fire_timed()
-
+        
         # Only the idle is enabled (no action available)
-        while sum(self.action_masks()) == int (self.standby):
+        while sum(self.action_masks()) == 0:
             self.fire_timed()
             if self.is_terminal():
                 break

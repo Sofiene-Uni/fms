@@ -70,30 +70,57 @@ def init_heuristics(elite):
       
       return  heuristic_obj
 
-def heuristic_index(algorithm_label):
+def label_index(algorithm_label):
+    
      
-      algos = {
-         "MTWR" : 0,
-         "SPTN" : 1,
-         "LPSR" : 2 ,
-         "LPT"  : 3 ,
-         "LPS"  : 4,
-         "SPS"  : 5,
-         "FIFO" : 6,
-         "LWT"  : 7,
-         "SWT"  : 8,
-         "LIFO" : 9 ,
-         "SPT"  : 10,
-         "SPSR" : 11,  
-         "LPTN" : 12,
-         "LTWR" : 13,
+    algos = {
+       "MTWR" : 0,
+       "SPTN" : 1,
+       "LPSR" : 2 ,
+       "LPT"  : 3 ,
+       "LPS"  : 4,
+       "SPS"  : 5,
+       "FIFO" : 6,
+       "LWT"  : 7,
+       "SWT"  : 8,
+       "LIFO" : 9 ,
+       "SPT"  : 10,
+       "SPSR" : 11,  
+       "LPTN" : 12,
+       "LTWR" : 13,
+    }
+    
+    
+    return  algos[algorithm_label]
+  
+
+def index_label(algorithm_index):
+    
+ 
+    algos = {
+      0: "MTWR",
+      1: "SPTN",
+      2: "LPSR",
+      3: "LPT",
+      4: "LPS",
+      5: "SPS",
+      6: "FIFO",
+      7: "LWT",
+      8: "SWT",
+      9: "LIFO",
+      10: "SPT",
+      11: "SPSR",
+      12: "LPTN",
+      13: "LTWR"
       }
-      return  algos[algorithm_label]
-     
+    
+    return  algos[int(algorithm_index)]
+  
+    
+       
 
 
-   
-   #---------------------------------------old order ------------------------------
+#---------------------------------------old order ------------------------------
  # def heuristic_index(algorithm_label):
      
  #     algos = {

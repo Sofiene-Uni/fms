@@ -19,7 +19,7 @@ def train_jssp(instance_id, timesteps=100000,dynamic=False,size=(None,None),n_ag
     ).unwrapped
     
     
-    model = MaskablePPO("MlpPolicy", env, verbose=1,seed=101)
+    model = MaskablePPO("MlpPolicy", env, verbose=1,seed=101,tensorboard_log="logs")
 
     start_time = time.time()  
     model.learn(total_timesteps=timesteps)
@@ -42,8 +42,8 @@ def train_jssp(instance_id, timesteps=100000,dynamic=False,size=(None,None),n_ag
 def main():
     
  
-    instances= ["bu01"]
-    timesteps = 1e5
+    instances= ["bu80"]
+    timesteps = 1e6
     dynamic=False
     size=(6,4)
     agv=5

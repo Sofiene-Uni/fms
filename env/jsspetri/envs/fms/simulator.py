@@ -28,10 +28,8 @@ class Simulator(Petri_build):
     def __init__(self, 
                  instance_id, 
                  dynamic=False,
-                 standby=False,
                  size=(None,None),
-                 n_agv=0
-                 
+                 n_agv=2
                   ):
         """
         Initializes the JSSPSimulator.
@@ -45,19 +43,18 @@ class Simulator(Petri_build):
         """
         super().__init__(instance_id, 
                          dynamic=dynamic,
-                         standby=standby,
                          benchmark='BU',
                          size=size,
-                         n_agv= n_agv
+                         n_agv=n_agv,
                          )
-
+        
         self.clock = 0
         self.interaction_counter = 0
         self.delivery_history = {}
-        self.jobs,self.select,self.ready,self.allocate,self.machines, self.deliver,self.delivery  = [], [], [], [], [] ,[], []
+        self.jobs,self.agvs,self.buffer,self.select,self.ready,self.allocate,self.machines, self.deliver,self.delivery  = [], [], [], [], [] ,[], [],[],[]
         self.petri_reset()
-        
-        self.action_map = self.action_mapping(self.n_machines, self.n_jobs)
+
+        self.action_map = self.action_mapping(self.n_machines, self.n_jobs ,self.n_agv )
        
 
     def petri_reset(self):
@@ -67,19 +64,21 @@ class Simulator(Petri_build):
         self.clock = 0
         for place in self.places.values():
             place.token_container = []
-        self.add_tokens()
+        self.add_tokens(LU=True)
    
-
         self.jobs = [p for p in self.places.values() if p.uid in self.filter_nodes("job")]
         self.select = [p for p in self.transitions.values() if p.uid in self.filter_nodes("select")]
+        self.agvs = [p for p in self.places.values() if p.uid in self.filter_nodes("agv")]
+        self.buffer = [p for p in self.transitions.values() if p.uid in self.filter_nodes("transport")]
         self.ready = [p for p in self.places.values() if p.uid in self.filter_nodes("ready")]
+        self.store = [p for p in self.places.values() if p.uid in self.filter_nodes("store")]
         self.allocate = [t for t in self.transitions.values() if t.uid in self.filter_nodes("allocate")]
         self.machines = [p for p in self.places.values() if p.uid in self.filter_nodes("machine")]
         self.deliver = [t for t in self.transitions.values() if t.uid in self.filter_nodes("finish_op")]
         self.delivery = [p for p in self.places.values() if p.uid in self.filter_nodes("finished_ops")]
         
 
-    def action_mapping(self, n_machines, n_jobs):
+    def action_mapping(self, n_machines, n_jobs , n_agv):
          """
          Maps multidiscrete actions to a more versatile Discrete format to use with exp DQN.
 
@@ -90,22 +89,21 @@ class Simulator(Petri_build):
          Returns:
              dict: Mapping dictionary.
          """
-         tuples = []
-         mapping_dict = {}
-         
-         for job in range(n_jobs):
-             mapping_dict[job] = (job,job)
-             
 
+         mapping_dict = {}
+         index =0
+         
          for machine in range(n_machines):
-             for job in range(n_jobs):
-                 tuple_entry = (job, machine)
-                 tuples.append(tuple_entry)
-                 index = n_jobs+ len(tuples) - 1
-                 mapping_dict[index] = tuple_entry
-                 
+            mapping_dict[index] = (machine, machine)
+            index+=1
+            
+            
+         for job in range(n_jobs):
+            for avg in range (n_agv):
+                mapping_dict[index] = (job,avg)
+                index+=1
          return mapping_dict
-    
+
 
     def utilization_reward(self):
         """
@@ -119,8 +117,6 @@ class Simulator(Petri_build):
         x = - (idle_machines / self.n_machines)
         return x
 
-
-
     def safeguard(self):
         for machine in self.machines:
             if machine.token_container:
@@ -130,30 +126,36 @@ class Simulator(Petri_build):
 
 
     def print_state(self):
+        print(f"Clock: {self.clock}")
         print("******current state**********") 
-        print( [p.busy for p in self.jobs])
-        print( [p.busy for p in self.machines])
-        print( [len(p.token_container) for p in self.jobs])
-        print([len(p.token_container) for p in self.ready])
-        print ([len(p.token_container) for p in self.machines])
-        print ([len(p.token_container) for p in self.delivery])
-        print (self.action_masks())
+        print("")
+        print(f"jobs:     {[len(p.token_container) for p in self.jobs]}" )
+        print( f"agv:      {[len(p.token_container) for p in self.agvs]}")
+        print(f"ready:    {[len(p.token_container) for p in self.ready]}",f"store:{[len(p.token_container) for p in self.store]}")
+        print(f"machines: {[len(p.token_container) for p in self.machines]}")
+        print (f"delivery: {[len(p.token_container) for p in self.delivery]}")
+        print("")
+        print(f"jobs busy:     {[p.busy for p in self.jobs]}" )
+        print( f"agv busy:      {[p.busy for p in self.agvs]}")
+        print(f"ready busy: {[p.busy for p in self.ready]}")
+        print(f"machines busy: {[p.busy for p in self.machines]}")
 
-
+        print("")
+        print (f"action mask : {self.action_masks()}")
+        
+        
     def is_terminal(self, step=0):
         """
         Checks if the simulation has reached a terminal state.
-
         Returns:
             bool: True if the terminal state is reached, False otherwise.
         """
         empty_queue = all(len(p.token_container) == 0 for p in self.jobs)
-        empty_transit = all(len(p.token_container) == 0 for p in self.ready) 
+        empty_agvs = all(len(p.token_container) == 0 for p in self.agvs) 
+        empty_buffer = all(len(p.token_container) == 0 for p in self.ready) 
         empty_machines = all(len(p.token_container) == 0 for p in self.machines) 
-        
-        #self.print_state()
-        
-        return empty_queue and empty_transit  and empty_machines 
+
+        return empty_queue and empty_buffer  and empty_machines  and empty_agvs
     
   
     def valid_action(self,action):
@@ -161,14 +163,8 @@ class Simulator(Petri_build):
         valid = False
         origin,destination=self.action_map[int(action)]
         
+        if action < self.n_machines:  #allocate : 
         
-        if action < self.n_jobs:  #select :     
-            if self.jobs[origin].token_container  and not self.jobs[origin].busy:
-                valid =True   # enabled if a token is available and the job is not being processed 
-            
-        else  :   #allocate 
-        
-     
             if self.ready [origin].token_container :   
                 token = self.ready[origin].token_container[0]
       
@@ -177,15 +173,18 @@ class Simulator(Petri_build):
                 machine = not self.machines[destination].busy
                 valid =  color and machine and ready 
                 
+                
+        else  :   #transport 
+            if self.jobs[origin].token_container  and not self.jobs[origin].busy and not self.agvs[destination].busy :
+                valid =True   # enabled if a token is available and the job is not being processed 
+
         return valid 
                 
-            
     def action_masks(self):
         actions = range(len (self.action_map))
         enabled_mask = list(map (self.valid_action, actions))
         return enabled_mask
         
-
     def time_tick(self):
         """
         Increments the internal clock and updates token logging.
@@ -193,13 +192,18 @@ class Simulator(Petri_build):
         self.clock += 1
         self.safeguard()
         
-        for place in self.jobs+ self.ready + self.machines:
+        for place in self.jobs+ self.ready + self.machines + self.agvs:
                 if  place.token_container:
                     token = place.token_container[0]
-            
                     last_logging = list(token.logging.keys())[-1]
                     token.logging[last_logging][2] += 1   # elapsed time increament 
-
+                        
+        for place in self.ready :
+            if  place.token_container:
+                place.busy=True
+            else :
+                place.busy=False
+                     
 
     def transfer_token(self, origin, destination, clock=0):
         """
@@ -215,6 +219,9 @@ class Simulator(Petri_build):
             return False
 
         token = copy.copy(origin.token_container[0])
+        token.current_place=destination.color
+        
+
         destination.token_container.append(token)
         origin.token_container.pop(0)
 
@@ -234,22 +241,21 @@ class Simulator(Petri_build):
             bool: True if a transition is fired, False otherwise.
         """
         
-        self.interaction_counter += 1
-        
+        self.interaction_counter += 1  
         origin, destination = self.action_map[int(action)] 
         
         if action in [index for index, value in enumerate(self.action_masks()) if value]: 
             
-            if action < self.n_jobs :        #select
-               selected= self.transfer_token(self.jobs[origin], self.ready[destination], self.clock) 
-               self.jobs[origin].busy= True
-               return selected
-            else :                           #allocate 
+            if action < self.n_machines :    #allocate
                 allocated = self.transfer_token(self.ready[origin], self.machines[destination], self.clock)  
-                self.ready[origin].busy = False
                 self.machines[destination].busy = True 
-                
                 return allocated
+
+            else : #transport
+                transported= self.transfer_token(self.jobs[origin], self.agvs[destination], self.clock) 
+                self.jobs[origin].busy= True
+                self.agvs[destination].busy= True
+                return transported
             
         else :
             return False 
@@ -260,35 +266,45 @@ class Simulator(Petri_build):
         Fires autonomous transitions based on completion times.
         """
 
-        for  place  in self.machines +self.ready  : 
+        for  place  in self.machines +self.agvs  : 
             if place.token_container:
                 token = place.token_container[0]
                 _, _, elapsed_time = list(token.logging.items())[-1][-1]
                 
-                if  place.type == "machine" and elapsed_time> token.process_time  :
+                if  place.type == "agv" and elapsed_time>= token.trans_time:
                     
+                    if token.type=="op":
+                        self.transfer_token(place, self.ready[token.color[1]], self.clock)
+                        self.agvs[token.current_place].busy = False   #AGV is available 
+                        
+                    elif token.type=="u" : # unload token 
+                        self.transfer_token(place, self.store[0], self.clock)
+                        self.agvs[token.current_place].busy = False   #AGV is available 
+                        self.jobs[token.color[0]].busy = False    #Job is available 
+                        
+              
+                elif  place.type == "machine" and elapsed_time>= token.process_time  :    
                     self.transfer_token(place, self.delivery[place.color], self.clock)
                     self.jobs[token.color[0]].busy = False
                     self.machines[token.color[1]].busy = False
-           
-                        
-                elif  place.type == "ready" and elapsed_time> token.trans_time:
-                    self.ready[token.color[0]].busy = True   #token is available 
-
-        self.time_tick()          
-        self.delivery_history[self.clock] = [token for place in self.delivery for token in place.token_container]
+                    
+        self.delivery_history[self.clock] = [token for place in self.delivery for token in place.token_container] + [token for place in self.store for token in place.token_container]
+        
+        if sum(self.action_masks()) == 0:
+            self.time_tick()          
+      
         
   
     def interact(self, action):
-        
         """
         Performs Petri net interactions and updates internal state.
-
         Parameters:
             action: Action to be performed.
         """
 
+        #self.print_state()
         fired=self.fire_controlled(action)  
+
         while sum(self.action_masks()) == 0:
             self.fire_timed()
             if self.is_terminal():
@@ -296,10 +312,26 @@ class Simulator(Petri_build):
             
         return fired
 
+
 if __name__ == "__main__":
     
-    petri = Simulator("bu01")
+    petri = Simulator("bu01") 
+    petri.print_state()
     
+    
+    for token in petri.jobs[0].token_container:
+        print(token)
+        
+
+        
+        
+    
+
+  
+
+
+
+
     
 
     

@@ -13,7 +13,7 @@ class Ltpt():
             total_time=0     
             original_job = env.sim.instance[job]
             for op in original_job:
-                total_time += sum(original_job[op])
+                total_time += op[1]
             return total_time
                 
         enabled_action = [index for index, value in enumerate(env.action_masks()) if value]  

@@ -27,13 +27,13 @@ def get_obs(env):
 
     #Get total consumption:    
     consumption=0
-    busy_machines= ~np.array( [machine.idle for machine in env.sim.machines])
+    busy_machines= ~np.array( [machine.busy for machine in env.sim.machines])
     consumption =  np.dot(busy_machines , env.sim.machines_powers)
     observation.append(consumption)
  
     #Get consumption per machine:       
     for idx,machine in enumerate(env.sim.machines):
-       observation.append(not machine.idle * env.sim.machines_powers[idx])
+       observation.append(not machine.busy * env.sim.machines_powers[idx])
                                
     # Get the number of deliverd operation 
     for delivery in env.sim.delivery:

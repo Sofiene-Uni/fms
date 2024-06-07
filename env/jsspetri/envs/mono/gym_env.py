@@ -18,7 +18,6 @@ class MonoEnv(Env):
                  render_mode: bool =None,
                  observation_depth:int =1, 
                  dynamic: bool=False,
-                 standby:bool=False,
                  ):
         """
         
@@ -35,7 +34,7 @@ class MonoEnv(Env):
         self.dynamic=dynamic
         self.instance_id=instance_id
 
-        self.sim = Simulator(self.instance_id,dynamic=self.dynamic,standby=standby)
+        self.sim = Simulator(self.instance_id,dynamic=self.dynamic)
         self.observation_depth = min(observation_depth, self.sim.n_machines)
    
          

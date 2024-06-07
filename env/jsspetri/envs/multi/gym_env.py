@@ -16,7 +16,6 @@ class MultiEnv(Env):
     def __init__(self, render_mode=None,
                  instance_id="ta01",
                  dynamic=False,
-                 standby=True,
                  observation_depth=1,
                  weights=[0.5,0.5]
                  ):
@@ -32,10 +31,9 @@ class MultiEnv(Env):
         
         self.weights=weights
         self.dynamic=dynamic
-        self.standby=standby
         self.instance_id=instance_id
 
-        self.sim = Simulator(self.instance_id,dynamic=self.dynamic,standby=standby)
+        self.sim = Simulator(self.instance_id,dynamic=self.dynamic)
         self.observation_depth = min(observation_depth, self.sim.n_machines)
   
         

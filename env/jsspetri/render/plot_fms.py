@@ -157,15 +157,19 @@ def plot_combined(jssp, show_rank=False, format_="jpg", dpi=300):
         color=agv_colors
     )
     
-    for bar, rank,type_ in zip(agv_bars, agv_data_dict["token_rank"], agv_data_dict["token_type"]):
+    for bar, rank, type_ in zip(agv_bars, agv_data_dict["token_rank"], agv_data_dict["token_type"]):
         
-        if type_ =="op":
+        if rank == 0:
+            ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
+                    'L', ha='center', va='center', color='black', fontsize=16)
+            
+        elif type_ == "op":
             ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
                     f'{rank}', ha='center', va='center', color='black', fontsize=16)
             
         else:
             ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
-                     f'{type_}', ha='center', va='center', color='black', fontsize=16)
+                     "U", ha='center', va='center', color='black', fontsize=16)
             
 
     ax2.tick_params(axis='x', labelsize=16)
@@ -475,13 +479,17 @@ def plot_debug(jssp, show_rank=False, format_="jpg", dpi=300):
     
     for bar, rank, type_ in zip(agv_bars, agv_data_dict["token_rank"], agv_data_dict["token_type"]):
         
-        if type_ == "op":
+        if rank == 0:
+            ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
+                    'L', ha='center', va='center', color='black', fontsize=16)
+            
+        elif type_ == "op":
             ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
                     f'{rank}', ha='center', va='center', color='black', fontsize=16)
             
         else:
             ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
-                     f'{type_}', ha='center', va='center', color='black', fontsize=16)
+                     "U", ha='center', va='center', color='black', fontsize=16)
 
 
 

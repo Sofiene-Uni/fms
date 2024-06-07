@@ -34,11 +34,11 @@ def agent_test(agent_id="ta01",instance="ta01",dynamic = False ,size=(None,None)
 
         i+=1 
         print(i)  
-        print(env.sim.print_state())
+        #print(env.sim.print_state())
         
     end_time = time.time()
     elapsed_time = end_time - start_time    
-    env.render(combined=True ,job_zoom=False,debug=True,format_="pdf")
+    env.render(combined=True ,job_zoom=False,debug=False,format_="pdf")
         
     print(f" inference took {elapsed_time} seconds") 
     print(f" Makespan : {env.sim.clock-1} , number of interactions {env.sim.interaction_counter}")
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     dynamic = False
     size = (6,4)
     
-    n_agv= 5
+    n_agv= 2
     instance_id="bu01"
     agent_id=f"{instance_id}-{n_agv}"
     
