@@ -276,6 +276,7 @@ class Simulator(Petri_build):
                     if token.type=="op":
                         self.transfer_token(place, self.ready[token.color[1]], self.clock)
                         self.agvs[token.current_place].busy = False   #AGV is available 
+                        self.ready[token.current_place].busy = True
                         
                     elif token.type=="u" : # unload token 
                         self.transfer_token(place, self.store[0], self.clock)
@@ -290,11 +291,7 @@ class Simulator(Petri_build):
                     
         self.delivery_history[self.clock] = [token for place in self.delivery for token in place.token_container] + [token for place in self.store for token in place.token_container]
         
-        if sum(self.action_masks()) == 0:
-            self.time_tick()          
-      
-        
-  
+
     def interact(self, action):
         """
         Performs Petri net interactions and updates internal state.
@@ -303,19 +300,21 @@ class Simulator(Petri_build):
         """
 
         #self.print_state()
-        fired=self.fire_controlled(action)  
-
         while sum(self.action_masks()) == 0:
-            self.fire_timed()
             if self.is_terminal():
                 break
-            
+            self.time_tick() 
+            self.fire_timed()
+         
+        fired=self.fire_controlled(action) 
+        
+
         return fired
 
 
 if __name__ == "__main__":
     
-    petri = Simulator("bu01") 
+    petri = Simulator("bu08") 
     petri.print_state()
     
     

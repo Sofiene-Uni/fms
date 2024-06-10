@@ -503,7 +503,7 @@ def plot_debug(jssp, show_rank=False, format_="jpg", dpi=300):
     plt.xticks(rotation=90)
     
     ax1.set_title(f"AGVs Schedule for instance {jssp.instance_id}  : {jssp.n_jobs} jobs, {jssp.n_machines} machines, {jssp.n_agv} AGV", fontsize=18, fontweight='bold')
-    ax2.set_xlabel(f"Makespan :{jssp.clock-1} steps", fontsize=16)
+    ax2.set_xlabel(f"Makespan :{jssp.clock} steps", fontsize=16)
     
     # Create a legend for job numbers and colors below the x-axis with stacked elements
     legend_labels = {job_number: color_map(i) for i, job_number in enumerate(unique_jobs)}
