@@ -276,7 +276,7 @@ class Simulator(Petri_build):
                     if token.type=="op":
                         self.transfer_token(place, self.ready[token.color[1]], self.clock)
                         self.agvs[token.current_place].busy = False   #AGV is available 
-                        self.ready[token.current_place].busy = True
+                        self.ready[token.color[1]].busy = True
                         
                     elif token.type=="u" : # unload token 
                         self.transfer_token(place, self.store[0], self.clock)
@@ -290,7 +290,6 @@ class Simulator(Petri_build):
                     self.machines[token.color[1]].busy = False
                     
         self.delivery_history[self.clock] = [token for place in self.delivery for token in place.token_container] + [token for place in self.store for token in place.token_container]
-        
 
     def interact(self, action):
         """
@@ -298,17 +297,14 @@ class Simulator(Petri_build):
         Parameters:
             action: Action to be performed.
         """
-
-        #self.print_state()
+        # self.print_state()
+        # print(self.clock, action, self.action_map[int(action)])
+        fired = self.fire_controlled(action)
         while sum(self.action_masks()) == 0:
             if self.is_terminal():
                 break
-            self.time_tick() 
+            self.time_tick()
             self.fire_timed()
-         
-        fired=self.fire_controlled(action) 
-        
-
         return fired
 
 

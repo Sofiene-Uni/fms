@@ -19,7 +19,7 @@ def train_jssp(instance_id, timesteps=100000,dynamic=False,size=(None,None),n_ag
     ).unwrapped
     
     
-    model = MaskablePPO("MlpPolicy", env, verbose=1,seed=101,tensorboard_log="logs")
+    model = MaskablePPO("MlpPolicy", env, verbose=1,seed=101,tensorboard_log="logs", learning_rate=0.0001)
 
     start_time = time.time()  
     model.learn(total_timesteps=timesteps)
@@ -40,16 +40,15 @@ def train_jssp(instance_id, timesteps=100000,dynamic=False,size=(None,None),n_ag
     model.save(f"agents/MaskablePPO-{instance_id}-{n_agv}-{timesteps}.zip")
 
 def main():
-    
- 
-    instances= ["bu80"]
-    timesteps = 1e6
-    dynamic=False
-    size=(6,4)
-    agv=5
+    instances = ["bu01", "bu02", "bu03", "bu04", "bu05", "bu06", "bu07", "bu08", "bu09", "bu10"]
+    timesteps = 500000
+    dynamic = False
+    size = [(6, 4), (7, 4), (7, 4), (6, 4), (6, 4), (7, 4), (9, 4), (7, 4), (6, 4), (7, 4)]
+    n_agv = 2
+    # agent_id=f"{instance_id}-{n_agv}"
 
-    for instance_id  in instances :
-        train_jssp(instance_id, timesteps=timesteps,dynamic=dynamic,size=size ,n_agv=agv)
+    for i in [2, 3, 5, 6, 7, 9]:
+        train_jssp(instances[i], timesteps=timesteps,dynamic=dynamic,size=size[i] ,n_agv=n_agv)
 
 if __name__ == "__main__":
     main()

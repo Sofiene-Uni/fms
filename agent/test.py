@@ -14,7 +14,7 @@ def agent_test(agent_id="ta01",instance="ta01",dynamic = False ,size=(None,None)
     
     env = gym.make("jsspetri-fms-v0",
                    render_mode="solution",
-                   instance_id=instance_id,
+                   instance_id=instance,
                    dynamic=dynamic,
                    size=size,
                    n_agv=n_agv
@@ -46,16 +46,15 @@ def agent_test(agent_id="ta01",instance="ta01",dynamic = False ,size=(None,None)
     return env.sim.clock
 
 if __name__ == "__main__":
-    
+    instances = ["bu01", "bu02", "bu03", "bu04", "bu05", "bu06", "bu07", "bu08", "bu09", "bu10"]
+    # timesteps = 500000
     dynamic = False
-    size = (6,4)
-    
-    n_agv= 2
-    instance_id="bu01"
-    agent_id=f"{instance_id}-{n_agv}"
+    size = [(6, 4), (7, 4), (7, 4), (6, 4), (6, 4), (7, 4), (9, 4), (7, 4), (6, 4), (7, 4)]
+    n_agv = 2
+    # agent_id=f"{instance_id}-{n_agv}"
     
     
-    samples = [agent_test(agent_id,instance=instance_id,dynamic=dynamic,size=size,n_agv=n_agv) for _ in range(1)]
+    samples = [agent_test(f"{instances[i]}-{n_agv}-100000",instance=instances[i],dynamic=dynamic,size=size[i],n_agv=n_agv) for i in [2,3,5,6,7,9]]
     print(min(samples),max(samples),sum(samples)/len(samples))
         
         
