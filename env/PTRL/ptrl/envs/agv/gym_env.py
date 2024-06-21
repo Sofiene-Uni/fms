@@ -2,13 +2,12 @@ import numpy as np
 from gymnasium import Env
 from gymnasium import spaces
 
-from ptrl.envs.agv.simulator import Simulator
+from ptrl.envs.fms.simulator import Simulator
 from ptrl.render.plot_fms import plot_solution, plot_job,plot_agv,plot_combined,plot_debug
 from ptrl.utils.obs_fms import get_obs
 
 
 class AgvEnv(Env):
-    
     """
     Custom Gym environment for Job Shop Scheduling using a Petri net simulator.
     """
@@ -39,7 +38,7 @@ class AgvEnv(Env):
         self.sim = Simulator(self.instance_id,dynamic=self.dynamic, size=size ,n_agv=n_agv)
         self.observation_depth = min(observation_depth, self.sim.n_machines)
    
-        observation_size= 3*self.sim.n_machines +2*self.sim.n_agv+ 2*(self.sim.n_jobs * self.observation_depth)  
+        observation_size= 3 * self.sim.n_machines + 2 * (self.sim.n_jobs * self.observation_depth)  
         self.observation_space= spaces.Box(low=-1, high=self.sim.max_bound,shape=(observation_size,),dtype=np.int64)
     
     
@@ -122,6 +121,7 @@ class AgvEnv(Env):
             else :
                 plot_solution(self.sim,show_rank=rank,format_=format_,dpi=dpi)
                 
+
     def close(self):
         """
         Close the environment.
@@ -140,26 +140,16 @@ if __name__ == "__main__":
     dynamic=False
     size=(6,4)
     
-    env=AgvEnv(instance_id=instance,dynamic=dynamic,size=size,n_agv=agvs)
+    env=FmsEnv(instance_id=instance,dynamic=dynamic,size=size,n_agv=agvs)
+    print (env.action_space)
+    
+    
 
     
+
   
     
-        
-      
     
-        
-        
+
     
-        
-    
-        
-    
-        
-    
-      
-        
-        
-    
-        
-       
+   
