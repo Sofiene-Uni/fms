@@ -6,19 +6,18 @@ class Graph():
     def __init__(self, sim):
         self.sim = sim
         
-    def plot_net(self, fired_transitions=list):
+    def plot_net(self, fired_transitions:list=[]):
         dot = Digraph(comment='Petri Net')
+        dot.attr(label=f'Time Step: {self.sim.clock}', fontsize='20', labelloc='t')
 
         # Add places
         places_by_role = {}
         for place in self.sim.places.values():
-            
-            #str(len(place.token_container))
             if place.show:
                 if place.type  in ["p"]:
                     dot.node(place.uid, shape='circle', label=str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='2')
                 elif place.type in ["b" ,"s"]:
-                    dot.node(place.uid, shape='circle', label=str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='1')
+                    dot.node(place.uid, shape='circle', label=str(len(place.token_container)) , style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='1')
                 else:
                     dot.node(place.uid, shape='circle', label=str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='0.5')
 
@@ -33,26 +32,22 @@ class Graph():
             
                 
                 if  transition.type == "a" and transition.timed:
-                    dot.node(transition.uid, shape='box', label="", style='filled', fillcolor='lightgreen', fontsize='10', height='0.2')
+                    dot.node(transition.uid, shape='box', label="", style='filled', fillcolor='lightblue', fontsize='10', height='0.2')
                 elif transition.type == "a" and not  transition.timed:
                     dot.node(transition.uid, shape='box', label=str(transition.color), style='filled', fillcolor='lightgrey', fontsize='10', height='0.2')
                 else:
                     fillcolor = 'white' if transition.enabled else 'black'
                     dot.node(transition.uid, shape='box', label="", style='filled', fillcolor=fillcolor, fontsize='10', height='0.2')
                     
+   
+            
                 if transition.uid in fired_transitions:
-                     dot.node(transition.uid, shape='box', label="", style='filled', fillcolor='red', fontsize='10', height='0.2')
+                      dot.node(transition.uid, shape='box', label="", style='filled', fillcolor='greenyellow', fontsize='10', height='0.2')
                  
 
                 if transition.role not in transitions_by_role:
                     transitions_by_role[transition.role] = []
                 transitions_by_role[transition.role].append(transition.uid)
-                
-                
-                
-                
-      
-            
 
         # Add arcs
         for place in self.sim.places.values():

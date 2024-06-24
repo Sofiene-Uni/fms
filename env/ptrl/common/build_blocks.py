@@ -151,7 +151,7 @@ class Token:
 
         Parameters:
             initial_place: The initial place where the token is located.
-            type (str) : 
+            type (str) : colored / non colored
             role (str): can be op: operation , lu : load/ unload , f:  flag ....  
             color (tuple): Tuple representing the color of the token (job_color, machine_color).
             order (int): Order of the token.
@@ -162,7 +162,6 @@ class Token:
         
         self.uid = IdGen.generate_uid()
         self.order = order
-        
         self.type=type_
         self.role = role
         self.color = color

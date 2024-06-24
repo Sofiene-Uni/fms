@@ -1,5 +1,5 @@
 import copy
-from ptrl.envs.agv.petri_build import Petri_build
+from ptrl.envs.tools.petri_build import Petri_build
 from ptrl.render.graph import  Graph
 
 
@@ -170,7 +170,6 @@ class Simulator(Petri_build):
     def fire_auto(self):
         
         self.time_tick()
-    
         fired_transitions=[]
         
         
@@ -210,9 +209,6 @@ class Simulator(Petri_build):
                     
         delivery=[p for p in self.places.values() if p.type =="d"]      
         self.delivery_history[self.clock] = [token for place in delivery for token in place.token_container] 
-        
-        
-        
         
         return  fired_transitions
             
@@ -254,12 +250,13 @@ class Simulator(Petri_build):
         
         fired_controlled , fired_auto =[],[]     
         fired_controlled = self.fire_controlled(action)  
-
+        #self.graph.plot_net(fired_controlled)
+        
         while sum(self.action_masks()) == 0:
             if self.is_terminal():
                 break
             fired_auto = self.fire_auto()
-            self.graph.plot_net(fired_controlled+fired_auto)
+            #self.graph.plot_net(fired_auto)
             
  
 

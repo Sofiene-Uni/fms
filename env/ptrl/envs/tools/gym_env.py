@@ -2,12 +2,12 @@ import numpy as np
 from gymnasium import Env
 from gymnasium import spaces
 
-from ptrl.envs.agv.simulator import Simulator
+from ptrl.envs.tools.simulator import Simulator
 from ptrl.render.plot_fms import plot_solution,plot_job
 from ptrl.utils.obs_fms import get_obs
 
 
-class AgvEnv(Env):
+class ToolsEnv(Env):
     
     """
     Custom Gym environment for Job Shop Scheduling using a Petri net simulator.

@@ -26,7 +26,7 @@ def plot_solution(jssp, show_rank=False, format_="jpg", dpi=300):
         "token_rank": [],
         "entry_values": [],
         "process_times": [],
-        "token_type": [],
+        "token_role": [],
         "jobs": []
     }
     
@@ -45,7 +45,7 @@ def plot_solution(jssp, show_rank=False, format_="jpg", dpi=300):
             if place in jssp.filter_nodes("agv_transporting"):
                 agv_data_dict["agv_id"].append(f"AGV- {jssp.places[place].color}")
                 agv_data_dict["token_rank"].append(token.order)
-                agv_data_dict["token_type"].append(token.type)
+                agv_data_dict["token_role"].append(token.role)
                 agv_data_dict["entry_values"].append(entry[0])
                 agv_data_dict["process_times"].append(entry[2])
                 agv_data_dict["jobs"].append(token.color[0])
@@ -85,19 +85,22 @@ def plot_solution(jssp, show_rank=False, format_="jpg", dpi=300):
         color=agv_colors
     )
     
-    for bar, rank, type_ in zip(agv_bars, agv_data_dict["token_rank"], agv_data_dict["token_type"]):
+    for bar, rank, role in zip(agv_bars, agv_data_dict["token_rank"], agv_data_dict["token_role"]):
         
         if rank == 0:
             ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
                     'L', ha='center', va='center', color='black', fontsize=16)
             
-        elif type_ == "op":
+        elif role == "op":
             ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
                     f'{rank}', ha='center', va='center', color='black', fontsize=16)
             
-        else:
+        elif token.role == "u": 
             ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
-                     "U", ha='center', va='center', color='black', fontsize=16)
+                      "U", ha='center', va='center', color='black', fontsize=16)
+            
+     
+            
             
 
     ax2.tick_params(axis='x', labelsize=16)
@@ -250,7 +253,7 @@ def plot_job(jssp,job=0 ,format_="jpg" ,dpi=300 ,n_agv=0):
    
     plt.tight_layout()  
     plt.show() 
-    fig.savefig(file_path, format_=format_, dpi=dpi)
+    #fig.savefig(file_path, format_=format_, dpi=dpi)
     
                 
 
