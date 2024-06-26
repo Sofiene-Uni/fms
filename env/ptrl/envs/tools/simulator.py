@@ -3,8 +3,6 @@ from ptrl.envs.tools.petri_build import Petri_build
 from ptrl.render.graph import  Graph
 
 
-
-
 class Simulator(Petri_build):
     """
     Class representing the core logic of a Job Shop Scheduling Problem (JSSP) simulation using a Petri net.
@@ -67,7 +65,7 @@ class Simulator(Petri_build):
             place.token_container = []
                   
         self.add_tokens()
-        self.check_valid()
+        self.refresh_state()
         
 
     def action_mapping(self):
@@ -88,64 +86,66 @@ class Simulator(Petri_build):
             bool: True if the terminal state is reached, False otherwise.
         """
         # all places are empty except delivery and flages
-
         process_places=  [p for p in self.places.values() if p.type  not in ["d","f"] ]
         empty_process = all(len(p.token_container) == 0 for p in process_places)
         return empty_process
-    
-    
-    
-    def safeguard(self):
-        
-        machine_processing =  [p for p in self.places.values() if p.uid in self.filter_nodes("machine_processing")] 
-        for machine in machine_processing:
-            if machine.token_container:
-                token=machine.token_container[0]
-                if machine.color != token.color[1] :
-                    print(f"error detected { (machine.color, token.color[1])}")
-                    
-
-    def check_valid(self):
-        
-        for transition in self.action_map.values(): 
-            if transition.color==None : # non colored transition
-                transition.enabled = all(parent.token_container for parent in transition.parents)  
-            
-            else : #colored transition  (sorting trans)
-                token_available = all(parent.token_container for parent in transition.parents)  
-                token=transition.parents[0].token_container[0] 
-                transition.enabled= token_available and token.color[1]==transition.color
+           
                 
-                
-    def action_masks(self):
+    def action_masks(self):   
+        self.refresh_state()
         mask =[t.enabled for t in self.transitions.values() if t.type == "c"]
         return mask
     
     
-    
-    def transfer_token(self, origins, destinations):
-        """
-        Transfers a token from one place to another.
-
-        Parameters:
-            origin: Origin place.
-            destination: Destination place.
-            current_clock (int): Current simulation clock.
-        """
-        for origin in origins:     
-            if origin.type=="f" :   # its idle flag
-                origin.token_container.pop(0)   
-            else:
-                token = copy.copy(origin.token_container[0])
-                origin.token_container.pop(0)
-                token.logging[origin.uid][1] =  self.clock
+    def refresh_state(self):
+        self.sort_tokens()
+        for transition in self.action_map.values(): 
+            transition.check_state()
+            
+            
+    def sort_tokens(self):  
+        
+        for place in [p for p in self.places.values() if p.type == "s"]:
+            if place.role == "job_sorting" and place.token_container:
+                tokens_to_process = list(place.token_container)  # Create a copy of the token list to avoid modification issues
+                for token in tokens_to_process:
+                 
+                    for transition in place.children:
+                        if token.color[0] == transition.color: 
+                            transition.fire(clock=self.clock)
+                              
+            elif place.role == "machine_sorting" and place.token_container:
+                tokens_to_process = list(place.token_container)
+                for token in tokens_to_process:
+                    for transition in place.children:
+                        if token.color[1] == transition.color:
+                            transition.fire(clock=self.clock)
+                       
+                      
+    def fire_auto(self):
+        
+        fired_transitions=[]
+        for place in  [p for p in self.places.values() if p.type =="p" ]  :
+            if place.token_container:
+                token=place.token_container[0]
+                _, _, elapsed_time = list(token.logging.items())[-1][-1]
+                transition=place.children[0]
                 
-        for destination in destinations: 
-                token.logging[destination.uid] =  [self.clock, 0, 0]
-                destination.token_container.append(token)
+                if  place.role == "agv_transporting" and elapsed_time>= token.trans_time:
+                    transition.fire(clock=self.clock)
+                   
+                elif place.role == "machine_processing" and elapsed_time>= token.process_time:
+                    transition.fire(clock=self.clock)
 
-        self.check_valid()
-
+                self.refresh_state()     
+                fired_transitions.append(transition.uid)
+                
+                
+        delivery =  [p for p in self.places.values() if p.type =="d"] 
+        self.delivery_history[self.clock] = [token  for place in delivery for token in place.token_container ] 
+          
+        return  fired_transitions
+    
     
     def fire_controlled(self, action):
         """
@@ -157,108 +157,46 @@ class Simulator(Petri_build):
         """
         
         fire_transisions=[]  
-        
         if action in  [index for index, value in enumerate(self.action_masks()) if value]:
             self.interaction_counter += 1 
             transition = self.action_map[int(action)] 
-            self.transfer_token(transition.parents,transition.children)
+            transition.fire(clock=self.clock)
+            self.refresh_state()
+            
             fire_transisions.append(transition.uid)
  
         return fire_transisions
             
-
-    def fire_auto(self):
-        
-        self.time_tick()
-        fired_transitions=[]
-        
-        
-        for place in [p for p in self.places.values() if p.type == "s"]:
-            if place.role == "job_sorting" and place.token_container:
-                tokens_to_process = list(place.token_container)  # Create a copy of the token list to avoid modification issues
-                for token in tokens_to_process:
-                 
-                    for transition in place.children:
-                        if token.color[0] == transition.color: 
-                            self.transfer_token(transition.parents, transition.children)
-                            fired_transitions.append(transition.uid)
-
-
-            elif place.role == "machine_sorting" and place.token_container:
-                tokens_to_process = list(place.token_container)
-                for token in tokens_to_process:
-                    for transition in place.children:
-                        if token.color[1] == transition.color:
-                            self.transfer_token(transition.parents, transition.children)
-                            fired_transitions.append(transition.uid)
-                                    
- 
-        for place in  [p for p in self.places.values() if p.type =="p" ]  :
-            if place.token_container:
-                token=place.token_container[0]
-                _, _, elapsed_time = list(token.logging.items())[-1][-1]
-                transition=place.children[0]
-                
-                if  place.role == "agv_transporting" and elapsed_time>= token.trans_time:
-                    self.transfer_token(transition.parents,transition.children)
-                    fired_transitions.append(transition.uid)
-                    
-                elif place.role == "machine_processing" and elapsed_time>= token.process_time:
-                    self.transfer_token(transition.parents,transition.children)
-                    fired_transitions.append(transition.uid)
-                    
-        delivery=[p for p in self.places.values() if p.type =="d"]      
-        self.delivery_history[self.clock] = [token for place in delivery for token in place.token_container] 
-        
-        return  fired_transitions
-            
-
 
     def time_tick(self):
         """
         Increments the internal clock and updates token logging.
         """
         self.clock += 1
-        for place in self.places.values():
-                if  place.token_container:
-                    token = place.token_container[0]
-                    last_logging = list(token.logging.keys())[-1]
-                    token.logging[last_logging][2] += 1   # elapsed time increament  
-                    
-        self.safeguard()
-        
+        for place in [p for p in self.places.values() if p.type =="p"]  :
+            place.tick()
+               
 
-    def utilization_reward(self):
-        """
-        Calculates the utilization reward.
-        Returns:
-            float: Calculated reward.
-        """   
-        idle_places =  [p for p in self.places.values() if p.uid in self.filter_nodes("machine_idle")]
-        idle_machines = sum(1 for machine in idle_places if idle_places.token_container)
-        x = - (idle_machines / self.n_machines)
-        return x
-
-    
-
-    def interact(self, action):
+    def interact(self, action ,screenshot=False):
         """
         Performs Petri net interactions and updates internal state.
         Parameters:
             action: Action to be performed.
         """
-        
-        fired_controlled , fired_auto =[],[]     
-        fired_controlled = self.fire_controlled(action)  
-        #self.graph.plot_net(fired_controlled)
-        
+    
+        fired_controlled = self.fire_controlled(action) 
+        self.graph.plot_net(fired_controlled) if screenshot else None
+
         while sum(self.action_masks()) == 0:
-            if self.is_terminal():
-                break
+            self.time_tick()
+   
             fired_auto = self.fire_auto()
-            #self.graph.plot_net(fired_auto)
+            self.graph.plot_net(fired_auto) if screenshot else None
+
             
- 
+            if self.is_terminal():
+               break
+           
 
 if __name__ == "__main__":
     

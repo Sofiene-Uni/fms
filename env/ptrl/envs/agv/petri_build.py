@@ -86,7 +86,6 @@ class Petri_build:
                 if display:
                     print(node) 
                 return node
-
         print("node not found !")
                 
 
@@ -205,25 +204,20 @@ class Petri_build:
             ("place", "b"  , "job", True, False,True , self.n_jobs),  
             ("trans", "c" ,  "job_select",False,False,True, self.n_jobs),
             ("place", "b" ,  "selected_jobs",False ,False,True, 1),
-
             ("trans", "c",  "agv_select",False,False,True,self.n_agv) ,  
             ("place", "p" , "agv_transporting",True,True,True,self.n_agv) ,
             ("place", "f" , "agv_idle",True,False,show_flags,self.n_agv) ,
             ("trans", "a",  "agv_finish",False,True,True,self.n_agv) , 
-
             ("place", "s" , "machine_sorting",False,False,True,1) ,
             ("trans", "a",  "machine_sort",True,False,True,self.n_machines),
-            
             ("place", "b" , "machine_buffer",True,False,True, self.n_machines),
             ("trans", "c",  "machine_allocate",False,False,True,self.n_machines),
             ("place", "p" , "machine_processing",True,True,True, self.n_machines),
             ("place", "f" , "machine_idle",True,False,show_flags, self.n_machines),
             ("trans", "a",  "machine_finish",True,True,True,self.n_machines),
             ("place", "d" , "delivery",True,False, True,self.n_machines) ,
-     
-            
-             
-            ("place", "s" , "job_sorting",False,False, show_flags,1) ,
+
+            ("place", "s" , "job_sorting",False,False, False,1) ,
             ("trans", "a",  "job_sort",True,False,show_flags,self.n_jobs),
             ]
 
@@ -254,9 +248,7 @@ class Petri_build:
         ]
         
 
-        
         if self.LU:
-            
             nodes_layers += [ ("place", "d", "store",False,False,True, 1),("trans", "a", "lu", False,False,True,1)]
             layers_to_connect  += [("machine_sorting", "lu", "p2t", False), ("lu", "store", "t2p",False)]
 

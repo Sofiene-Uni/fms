@@ -1,11 +1,8 @@
 import os
-import numpy as np 
 from datetime import datetime
-import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+import numpy as np
 
-
-    
 def plot_solution(jssp, show_rank=False, format_="jpg", dpi=300):
     renders_folder = f"{os.getcwd()}\\renders\\"
     if not os.path.exists(renders_folder):
@@ -30,7 +27,6 @@ def plot_solution(jssp, show_rank=False, format_="jpg", dpi=300):
         "jobs": []
     }
     
-    
     jssp_data_dict = {
         "machine_names": [],
         "token_rank": [],
@@ -40,27 +36,35 @@ def plot_solution(jssp, show_rank=False, format_="jpg", dpi=300):
     }
 
     finished_tokens = jssp.delivery_history[list(jssp.delivery_history.keys())[-1]]
+    
     for token in finished_tokens:
         for place, entry in token.logging.items():
-            if place in jssp.filter_nodes("agv_transporting"):
+            if place in jssp.filter_nodes("agv_transporting") :
+                
                 agv_data_dict["agv_id"].append(f"AGV- {jssp.places[place].color}")
+                
+                agv_data_dict["jobs"].append(token.color[0])
                 agv_data_dict["token_rank"].append(token.order)
                 agv_data_dict["token_role"].append(token.role)
                 agv_data_dict["entry_values"].append(entry[0])
                 agv_data_dict["process_times"].append(entry[2])
-                agv_data_dict["jobs"].append(token.color[0])
-                
  
             if place in jssp.filter_nodes("machine_processing"):
                 jssp_data_dict["machine_names"].append(f"M {jssp.places[place].color}")
+                
+                jssp_data_dict["jobs"].append(token.color[0])
                 jssp_data_dict["token_rank"].append(token.order)
                 jssp_data_dict["entry_values"].append(entry[0])
                 jssp_data_dict["process_times"].append(entry[2])
-                jssp_data_dict["jobs"].append(token.color[0])
+                
+         
                 
     unique_jobs = list(set(agv_data_dict["jobs"]))
+    
+    
     color_map = plt.cm.get_cmap("tab20b", len(unique_jobs))
     job_color_mapping = {job_number: color_map(i) for i, job_number in enumerate(unique_jobs)}
+    
     agv_colors = [job_color_mapping[job_number] for job_number in agv_data_dict["jobs"]]
     jssp_colors = [job_color_mapping[job_number] for job_number in jssp_data_dict["jobs"]]
     
@@ -72,7 +76,6 @@ def plot_solution(jssp, show_rank=False, format_="jpg", dpi=300):
         color=jssp_colors
     )
 
-   
     for bar, rank in zip(jssp_bars, jssp_data_dict["token_rank"]):
         ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
                 f'{rank}', ha='center', va='center', color='black', fontsize=16)
@@ -98,10 +101,11 @@ def plot_solution(jssp, show_rank=False, format_="jpg", dpi=300):
         elif token.role == "u": 
             ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
                       "U", ha='center', va='center', color='black', fontsize=16)
-            
-     
-            
-            
+    
+    # Add vertical lines at each step
+    for step in range(int(jssp.clock) + 1):
+        ax1.axvline(x=step, color='grey', linestyle='--', linewidth=0.5)
+        ax2.axvline(x=step, color='grey', linestyle='--', linewidth=0.5)
 
     ax2.tick_params(axis='x', labelsize=16)
     ax1.tick_params(axis='y', labelsize=16)
@@ -111,7 +115,6 @@ def plot_solution(jssp, show_rank=False, format_="jpg", dpi=300):
     
     ax1.set_title(f"AGVs Schedule for instance {jssp.instance_id}  : {jssp.n_jobs} jobs, {jssp.n_machines} machines, {jssp.n_agv} AGV", fontsize=18, fontweight='bold')
     ax2.set_xlabel(f"Makespan :{jssp.clock} steps" ,fontsize=16)
-    
     
     # Create a legend for job numbers and colors below the x-axis with stacked elements
     legend_labels = {job_number: color_map(i) for i, job_number in enumerate(unique_jobs)}
@@ -124,6 +127,7 @@ def plot_solution(jssp, show_rank=False, format_="jpg", dpi=300):
     plt.tight_layout()  
     plt.show() 
     fig.savefig(file_path, format=format_, dpi=dpi)
+
     
 
 def plot_job(jssp,job=0 ,format_="jpg" ,dpi=300 ,n_agv=0): 

@@ -1,3 +1,5 @@
+import copy 
+
 class IdGen:
     """
     Class for generating unique IDs.
@@ -75,6 +77,23 @@ class Place:
         """
         return f"Place name: {self.label}, Type: {self.type}, Role: {self.role}, Tokens: {len(self.token_container)}, color: {self.color}, parents: {[p.uid for p in self.parents]}, children: {[c.uid for c in self.children]}, id: {self.uid}"
 
+             
+    def tick(self):
+        if self.token_container:
+            for token in self.token_container:
+                last_logging = list(token.logging.keys())[-1]
+                token.logging[last_logging][2] += 1   # elapsed time increament  
+                
+                
+                
+    def error_check(self):
+        if self.token_container and self.color!=None:   
+            for token in self.token_container:
+                if self.color != token.color[1] :
+                    print(f" wrong token detected in place {self.label} ")
+                     
+                    
+                    
 
 class Transition:
     """
@@ -110,8 +129,6 @@ class Transition:
        
         self.parents = []
         self.children = []
-        
-        
         self.show=show
         
 
@@ -132,6 +149,42 @@ class Transition:
     def __str__(self):  
         return f"Transition name: {self.label}, Type: {self.type}, Role: {self.role}, color: {self.color}, parents: {[p.uid for p in self.parents]}, children: {[c.uid for c in self.children]}, id: {self.uid}"
 
+
+
+    def check_state(self) :
+        if self.color==None : # non colored transition
+            self.enabled = all(parent.token_container for parent in self.parents)  
+            
+        else : #colored transition  (sorting trans)
+            tokens_available = all(parent.token_container for parent in self.parents)  
+            token=self.parents[0].token_container[0] 
+            self.enabled= tokens_available and token.color[1]==self.color
+
+
+    def fire (self,clock=0):
+            """
+            Transfers a token from one place to another.
+
+            Parameters:
+                origin: Origin place.
+                destination: Destination place.
+                current_clock (int): Current simulation clock.
+            """
+            for parent in self.parents:      
+                if parent.token_container:
+                
+                    if parent.type=="f" :   # its idle flag
+                        parent.token_container.pop(0)   
+                    else:  
+                        token = copy.copy(parent.token_container[0])
+                        token.logging[parent.uid][1] = clock 
+                        
+                        for child in self.children:  
+                            token.logging[child.uid] = [clock, 0, 0]  # new place  
+                            child.token_container.append(token)
+    
+                        parent.token_container.pop(0)
+        
 
 class Token:
     """

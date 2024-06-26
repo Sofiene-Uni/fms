@@ -69,10 +69,32 @@ class ToolsEnv(Env):
         Returns:
             Any: Calculated reward .
         """
+
+
+        def utilization_reward(self):
+            """
+            Calculates the utilization reward.
+            Returns:
+                float: Calculated reward.
+            """   
+            idle_places =  [p for p in self.sim.places.values() if p.uid in self.sim.filter_nodes("machine_idle")]
+            idle_resource = sum(1 for resource in idle_places if resource.token_container)
+            util_machine = - (idle_resource / self.sim.n_machines)
+            
+            idle_places =  [p for p in self.sim.places.values() if p.uid in self.filter_nodes("agv_idle")]
+            idle_resource = sum(1 for resource in idle_places if resource.token_container)
+            util_agv = - (idle_resource / self.sim.n_agv)
+
+            return util_machine
+    
+        #return utilization_reward()
+        
+        
         if terminal :
             return -self.sim.clock
         else :
             return 0
+
 
 
     def action_masks(self):
@@ -105,9 +127,7 @@ class ToolsEnv(Env):
         """
         rank=False
         if self.render_mode == "solution":
-            
             plot_solution(self.sim,show_rank=rank,format_=format_,dpi=dpi)
-             
             if job_zoom :
                 for i in range (self.sim.n_jobs):
                     plot_job(self.sim,job=i,format_=format_,dpi=dpi)

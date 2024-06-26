@@ -9,17 +9,30 @@ class Graph():
     def plot_net(self, fired_transitions:list=[]):
         dot = Digraph(comment='Petri Net')
         dot.attr(label=f'Time Step: {self.sim.clock}', fontsize='20', labelloc='t')
-
+        
+      
+        
+        #str(place.token_container[0].color) if place.token_container else "0"
+        
+        # label=""
+        # if place.token_container:
+        #     for token in place.token_container:
+        #         label=label+str(token.color)
+        
+        
         # Add places
         places_by_role = {}
         for place in self.sim.places.values():
+
             if place.show:
                 if place.type  in ["p"]:
-                    dot.node(place.uid, shape='circle', label=str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='2')
+                    dot.node(place.uid, shape='circle', label= str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='1')
                 elif place.type in ["b" ,"s"]:
-                    dot.node(place.uid, shape='circle', label=str(len(place.token_container)) , style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='1')
+                    dot.node(place.uid, shape='circle', label= str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='1')
+                elif place.type in ["d"]:
+                     dot.node(place.uid, shape='circle', label=str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='1',penwidth='2')
                 else:
-                    dot.node(place.uid, shape='circle', label=str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='0.5')
+                    dot.node(place.uid, shape='circle', label=str(len(place.token_container)), style='filled,dotted', fillcolor='white', fontsize='16')
 
                 if place.role not in places_by_role:
                     places_by_role[place.role] = []
@@ -39,8 +52,7 @@ class Graph():
                     fillcolor = 'white' if transition.enabled else 'black'
                     dot.node(transition.uid, shape='box', label="", style='filled', fillcolor=fillcolor, fontsize='10', height='0.2')
                     
-   
-            
+
                 if transition.uid in fired_transitions:
                       dot.node(transition.uid, shape='box', label="", style='filled', fillcolor='greenyellow', fontsize='10', height='0.2')
                  
@@ -72,9 +84,17 @@ class Graph():
             data[new_key] = merged_values
             return data
 
-        places_by_role = merge_keys(places_by_role, ['agv_transporting', 'agv_idle'], 'agv')
+
+
+        places_by_role = merge_keys(places_by_role, ['job', 'job_idle'], 'job')
+        places_by_role = merge_keys(places_by_role, ['agv_transporting', 'agv_idle'], 'avg')
         places_by_role = merge_keys(places_by_role, ['machine_processing', 'machine_idle'], 'machine')
-        places_by_role = merge_keys(places_by_role, ['job', 'job_idle'], 'job_idle')
+            
+            
+        places_by_role = merge_keys(places_by_role, ["tool_request", "tool_idle"], 'tool')
+        places_by_role = merge_keys(places_by_role, ["tool_transporting","tool_transport_idle"], 'tool_transport')
+        
+
 
         # Align places horizontally by role
         for role, place_uids in places_by_role.items():

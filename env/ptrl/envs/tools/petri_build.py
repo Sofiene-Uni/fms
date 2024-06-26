@@ -21,6 +21,9 @@ class Petri_build:
                  dynamic=False,
                  size=(100,20),
                  n_agv=0,
+                 n_tools=0,
+                 n_tools_transport=0,
+                 
                  benchmark='Taillard'):
         """
         Initialize the Petri net with a JSSP instance.
@@ -32,6 +35,8 @@ class Petri_build:
         self.instance, specs = load_instance(self.instance_id,benchmark=benchmark)    
         self.n_jobs, self.n_machines, self.max_bound = specs
         self.n_agv=n_agv
+        self.n_tools= n_tools
+        self.n_tools_transport=n_tools_transport
          
         self.places = {}
         self.transitions = {}
@@ -42,7 +47,7 @@ class Petri_build:
         
         
         self.LU=True
-        self.create_petri(LU=self.LU ,show_flags=True)
+        self.create_petri(LU=self.LU ,show_flags=False)
 
 
     def __str__(self):
@@ -201,45 +206,54 @@ class Petri_build:
 
         #(genre=, type_=, role, colored timed,show,number)
         nodes_layers = [
-            ("place", "f" ,  "job_idle",True, False,show_flags ,self.n_jobs) ,
+            ("place", "f" ,  "job_idle",True, False,show_flags,self.n_jobs) ,
             ("place", "b"  , "job", True, False,True , self.n_jobs),  
             ("trans", "c" ,  "job_select",False,False,True, self.n_jobs),
             ("place", "b" ,  "selected_jobs",False ,False,True, 1),
-
             ("trans", "c",  "agv_select",False,False,True,self.n_agv) ,  
             ("place", "p" , "agv_transporting",True,True,True,self.n_agv) ,
             ("place", "f" , "agv_idle",True,False,show_flags,self.n_agv) ,
             ("trans", "a",  "agv_finish",False,True,True,self.n_agv) , 
-
             ("place", "s" , "machine_sorting",False,False,True,1) ,
             ("trans", "a",  "machine_sort",True,False,True,self.n_machines),
-            
             ("place", "b" , "machine_buffer",True,False,True, self.n_machines),
             ("trans", "c",  "machine_allocate",False,False,True,self.n_machines),
             ("place", "p" , "machine_processing",True,True,True, self.n_machines),
             ("place", "f" , "machine_idle",True,False,show_flags, self.n_machines),
             ("trans", "a",  "machine_finish",True,True,True,self.n_machines),
-            ("place", "d" , "delivery",True,False, True,self.n_machines) ,
-     
-            
-             
-            ("place", "s" , "job_sorting",False,False, show_flags,1) ,
+            ("place", "d" , "delivery",True,False, True,self.n_machines) ,   
+            ("place", "s" , "job_sorting",False,False, False,1) ,
             ("trans", "a",  "job_sort",True,False,show_flags,self.n_jobs),
-            ]
 
+
+            ("place", "s" ,  "tool_request_sorting",False ,False,True, 1),
+            ("trans", "a",  "request_sort",True,False,True,self.n_tools),
+            ("place", "b" , "tool_request",True,False,True, self.n_tools),
+            ("place", "f" ,  "tool_idle",True, False,show_flags ,self.n_tools) ,
+            ("trans", "c" ,  "tool_select",False,False,True, self.n_tools),
+            ("place", "f" , "tool_transport_idle",False,False,show_flags,1) ,
+            ("place", "b" , "tool_tranport_buffer",True,False,True, self.n_tools_transport),
+            ("trans", "a" ,  "tool_transport",False,False,True, self.n_tools_transport),
+            ("place", "p" , "tool_transporting",True,True,True,self.n_tools_transport) ,
+            ("trans", "a",  "transport_finish",False,True,True,self.n_tools_transport) , 
+            ("place", "s" , "machine_sorting_T",False,False,True,1) ,
+            ("trans", "a",  "machine_sort_T",True,False,True,self.n_machines),
+            ("place", "b" , "machine_buffer_T",True,False,True, self.n_machines),
+            ("place", "s" , "tools_sorting",False,False, False,1) ,
+            ("trans", "a",  "tool_sort",True,False,show_flags,self.n_tools),
+            ]
+        
 
         layers_to_connect = [
             ("job_idle", "job_select", "p2t", False),
             ("job", "job_select", "p2t", False),
             ("job_select", "selected_jobs", "t2p", True),
-            
             ("selected_jobs","agv_select","p2t", True),
             ("agv_idle","agv_select","p2t", False),
             ("agv_select","agv_transporting","t2p", False),   
             ("agv_transporting", "agv_finish", "p2t", False),
             ("agv_finish","agv_idle", "t2p", False),
             ("agv_finish", "machine_sorting", "t2p", True),
-            
             ("machine_sorting", "machine_sort", "p2t", True), 
             ("machine_sort","machine_buffer", "t2p", False),
             ("machine_buffer", "machine_allocate", "p2t", False),
@@ -251,6 +265,28 @@ class Petri_build:
             ("machine_finish", "job_sorting", "t2p", True),
             ("job_sorting" ,"job_sort",  "p2t",True),
             ("job_sort", "job_idle", "t2p", False),
+            
+
+            ("job_select", "tool_request_sorting", "t2p", True),
+            ("tool_request_sorting", "request_sort", "p2t", True),
+            ("request_sort", "tool_request" ,"t2p", False),
+            ("tool_request", "tool_select", "p2t", False),
+            ("tool_idle","tool_select",  "p2t", False), 
+            ("tool_select", "tool_tranport_buffer", "t2p", True),
+            ("tool_tranport_buffer",   "tool_transport", "p2t", True),
+            ("tool_transport", "tool_transporting", "t2p", True),
+            ("transport_finish", "tool_transport_idle", "t2p", False),
+            ( "tool_transport_idle", "tool_transport", "p2t", False),
+            ("tool_transporting", "transport_finish", "p2t", False),
+            ("transport_finish", "machine_sorting_T", "t2p", False),
+            ("machine_sorting_T", "machine_sort_T", "p2t", True),
+            ("machine_sort_T", "machine_buffer_T", "t2p", False),
+            ("machine_buffer_T", "machine_allocate", "p2t", False),
+            ("machine_finish", "tools_sorting", "t2p", True),
+            ("tools_sorting" ,"tool_sort", "p2t", True),
+            ("tool_sort", "tool_idle", "t2p", False),
+            
+               
         ]
         
 
@@ -261,6 +297,8 @@ class Petri_build:
             layers_to_connect  += [("machine_sorting", "lu", "p2t", False), ("lu", "store", "t2p",False)]
 
         # Add nodes: places and transitions
+        
+        print(self.n_tools)
         for genre, type_,role,colored,timed,show ,number in nodes_layers:
             self.add_nodes_layer(genre=genre,type_=type_,role=role,colored=colored, number=number ,timed=timed ,show=show)    
 

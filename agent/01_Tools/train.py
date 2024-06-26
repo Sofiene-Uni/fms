@@ -10,7 +10,7 @@ from datetime import datetime
 
 
 def train_jssp(instance_id, timesteps=100000,dynamic=False,size=(None,None),n_agv=2):
-    env = gym.make("ptrl-agv-v0",
+    env = gym.make("ptrl-tools-v0",
                    render_mode="solution",
                    instance_id=instance_id,
                    dynamic=dynamic,
@@ -47,10 +47,10 @@ def train_jssp(instance_id, timesteps=100000,dynamic=False,size=(None,None),n_ag
 def main():
     
  
-    #instances= ["bu01","bu02","bu03","bu04","bu05","bu06","bu07","bu08","bu09","bu10"]
+    instances= ["bu01","bu02","bu03","bu04","bu05","bu06","bu07","bu08","bu09","bu10"]
     
     instances= ["bu01"]
-    timesteps = 1e5
+    timesteps =1e5
     dynamic=False
     size=(10,5)
     agv=2

@@ -12,7 +12,7 @@ def agent_test(agent_id="ta01",instance="ta01",dynamic = False ,size=(None,None)
     local_agent = f"agents/MaskablePPO-{agent_id}.zip"
     global_agent= "agents/MaskablePPO.zip"
     
-    env = gym.make("ptrl-agv-v0",
+    env = gym.make("ptrl-tools-v0",
                    render_mode="solution",
                    instance_id=instance_id,
                    dynamic=dynamic,
@@ -36,7 +36,7 @@ def agent_test(agent_id="ta01",instance="ta01",dynamic = False ,size=(None,None)
         
     end_time = time.time()
     elapsed_time = end_time - start_time    
-    env.render(job_zoom=False,format_="pdf")
+    env.render(job_zoom=False)
     
     
         
