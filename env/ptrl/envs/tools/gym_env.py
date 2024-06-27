@@ -21,7 +21,7 @@ class ToolsEnv(Env):
                  dynamic: bool=False,
                  size=(None,None),
                  n_agv=1,
-              
+                 n_tt=1, # tool transport
                  ):
         """
         Initializes the JsspetriEnv.
@@ -36,7 +36,7 @@ class ToolsEnv(Env):
         self.dynamic=dynamic
         self.instance_id=instance_id
         
-        self.sim = Simulator(self.instance_id,dynamic=self.dynamic, size=size ,n_agv=n_agv)
+        self.sim = Simulator(self.instance_id,dynamic=self.dynamic, size=size ,n_agv=n_agv ,n_tt=n_tt)
         self.observation_depth = min(observation_depth, self.sim.n_machines)
    
         observation_size= 2*self.sim.n_machines +2*self.sim.n_agv+ 2*(self.sim.n_jobs * self.observation_depth) +1
@@ -65,37 +65,31 @@ class ToolsEnv(Env):
         """
         Calculate the reward.
         Parameters:
-            advantage: Advantage given by the interaction.
+            terminal: if the episode reached termination.
         Returns:
             Any: Calculated reward .
         """
-
-
+        
         def utilization_reward(self):
             """
-            Calculates the utilization reward.
+            Calculates the utilization reward/penalty.
             Returns:
-                float: Calculated reward.
+                float: Calculated feedback.
             """   
-            idle_places =  [p for p in self.sim.places.values() if p.uid in self.sim.filter_nodes("machine_idle")]
-            idle_resource = sum(1 for resource in idle_places if resource.token_container)
-            util_machine = - (idle_resource / self.sim.n_machines)
+            role,max_resources= ("machine_idle",self.sim.n_machines)
+            #role,max_resources= ("agv_idle",self.sim.n_agv)
             
-            idle_places =  [p for p in self.sim.places.values() if p.uid in self.filter_nodes("agv_idle")]
+            idle_places =  [p for p in self.sim.places.values() if p.uid in self.sim.filter_nodes(role)]
             idle_resource = sum(1 for resource in idle_places if resource.token_container)
-            util_agv = - (idle_resource / self.sim.n_agv)
-
-            return util_machine
+            util = - (idle_resource /max_resources )
+            return util
     
         #return utilization_reward()
-        
         
         if terminal :
             return -self.sim.clock
         else :
             return 0
-
-
 
     def action_masks(self):
         """
@@ -148,29 +142,9 @@ if __name__ == "__main__":
     
     instance="bu01"
     agvs=2
-    dynamic=False
-    size=(6,4)
+    tools_transport=1
     
-    env=AgvEnv(instance_id=instance,dynamic=dynamic,size=size,n_agv=agvs)
+    dynamic, size=False ,(6,4)
+    env=ToolsEnv(instance_id=instance,dynamic=dynamic,size=size,n_agv=agvs ,n_tt=tools_transport)
 
     
-  
-    
-        
-      
-    
-        
-        
-    
-        
-    
-        
-    
-        
-    
-      
-        
-        
-    
-        
-       

@@ -77,24 +77,22 @@ class AgvEnv(Env):
             Returns:
                 float: Calculated reward.
             """   
-            idle_places =  [p for p in self.sim.places.values() if p.uid in self.sim.filter_nodes("machine_idle")]
-            idle_resource = sum(1 for resource in idle_places if resource.token_container)
-            util_machine = - (idle_resource / self.sim.n_machines)
+            role,max_resources= ("machine_idle",self.sim.n_machines)
+            role,max_resources= ("agv_idle",self.sim.n_agv)
             
-            idle_places =  [p for p in self.sim.places.values() if p.uid in self.filter_nodes("agv_idle")]
+            idle_places =  [p for p in self.sim.places.values() if p.uid in self.sim.filter_nodes(role)]
             idle_resource = sum(1 for resource in idle_places if resource.token_container)
-            util_agv = - (idle_resource / self.sim.n_agv)
+            penalty = - (idle_resource /max_resources )
+            
+            return penalty
 
-            return util_machine
-    
-        #return utilization_reward()
+        #return utilization_reward(self)
         
         
         if terminal :
             return -self.sim.clock
         else :
             return 0
-
 
 
     def action_masks(self):

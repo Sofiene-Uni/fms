@@ -1,63 +1,62 @@
 import copy 
-from ptrl.common.instance_loader import load_instance ,load_trans
+from ptrl.common.instance_loader import load_instance, load_trans
 from ptrl.common.build_blocks import Token, Place, Transition
-
 
 class Petri_build:
     """
     A class representing a Petri net for Job Shop Scheduling Problems (JSSP).
+
     Attributes:
         instance_id (str): The ID of the JSSP instance.
         instance (pd.DataFrame): The JSSP instance data.
         n_jobs (int): The number of jobs in the instance.
         n_machines (int): The number of machines in the instance.
         max_bound (int): The maximum number of operations or tokens.
-
         places (dict): A dictionary containing Place objects.
         transitions (dict): A dictionary containing Transition objects.
     """
 
-    def __init__(self, instance_id,
-                 dynamic=False,
-                 size=(100,20),
-                 n_agv=0,
-                 benchmark='Taillard'):
+    def __init__(self, instance_id, dynamic=False, size=(100, 20), n_agv=0, benchmark='Taillard'):
         """
         Initialize the Petri net with a JSSP instance.
+
         Parameters:
             instance_id (str): The ID of the JSSP instance.
+            dynamic (bool): If True, appending new operations is possible, and the termination condition is that all queues are empty.
+            size (tuple): Size of the simulation environment.
+            n_agv (int): Number of AGVs (Automated Guided Vehicles) used in the simulation.
+            benchmark (str): The benchmark for the instance loading.
         """
-        self.dynamic=dynamic
+        self.dynamic = dynamic
         self.instance_id = instance_id
-        self.instance, specs = load_instance(self.instance_id,benchmark=benchmark)    
+        self.instance, specs = load_instance(self.instance_id, benchmark=benchmark)
         self.n_jobs, self.n_machines, self.max_bound = specs
-        self.n_agv=n_agv
-         
+        self.n_agv = n_agv
+
         self.places = {}
         self.transitions = {}
-        
-        if  self.dynamic : 
-            self.n_jobs,self.n_machines=size
-        self.tran_durations = load_trans(self.n_machines,benchmark=benchmark)
-        
-        
-        self.LU=True
-        self.create_petri(LU=self.LU ,show_flags=True)
 
+        if self.dynamic:
+            self.n_jobs, self.n_machines = size
+        self.tran_durations = load_trans(self.n_machines, benchmark=benchmark)
+
+        self.LU = True
+        self.create_petri(LU=self.LU, show_flags=True)
 
     def __str__(self):
         """
-        Get a string representation of the Petri net.
+        Get infos of  of the Petri net.
         Returns:
-            str: A string representing the Petri net.
+            str: A string infos about  the Petri net.
         """
         return f"JSSP {self.instance_id}: {self.n_jobs} jobs X {self.n_machines} machines"
 
     def filter_nodes(self, node_role):
         """
-        Filters nodes based on node type role.
+        Filters nodes based on node role.
+
         Parameters:
-            node_role (str): role of nodes to filter.
+            node_role (str): Role of nodes to filter.
 
         Returns:
             list: Filtered nodes.
@@ -72,57 +71,58 @@ class Petri_build:
                 filtered_nodes.append(transition.uid)
         return filtered_nodes
 
-    def node_info(self, node_uid,display=False):
+    def node_info(self, node_uid, display=False):
         """
-        Filters nodes based on nodeuid.
+        Retrieves information about a specific node.
+
         Parameters:
-            node_uid (str):
+            node_uid (str): The UID of the node.
+            display (bool): If True, prints the node information.
 
         Returns:
-            object:the subject node.
+            object: The subject node or None if not found.
         """
-        for node in list (self.places.values())+list (self.transitions.values()):
+        for node in list(self.places.values()) + list(self.transitions.values()):
             if node.uid == node_uid:  
                 if display:
                     print(node) 
                 return node
-        print("node not found !")
-                
+        print("Node not found!")
+        return None
 
-
-    def add_nodes_layer(self, genre="place", type_="", role="", colored=True, timed=False,show=True,number=1):
+    def add_nodes_layer(self, genre="place", type_="", role="", colored=True, timed=False, show=True, number=1):
         """
         Add a layer of nodes (places or transitions) to the Petri net.
 
         Parameters:
-            is_place (bool): True if nodes are places, False if transitions.
-            node_type (str): The type of nodes to be added place\transition.
-            node_role (str): The role of nodes to be added  machine, job , source ....
+            genre (str): The genre of nodes ("place" or "trans").
+            type_ (str): The type of nodes to be added.
+            role (str): The role of nodes to be added.
+            colored (bool): If True, nodes are colored.
+            timed (bool): If True, nodes are timed.
+            show (bool): If True, nodes are visible.
             number (int): The number of nodes to be added.
         """
-        if genre=="place":
+        if genre == "place":
             for i in range(number): 
-                
                 color = i if colored else None
                 place_name = f"{role} {i}"
-                place = Place(label=place_name,type_=type_,role= role,color=color,timed=timed ,show=show)   
+                place = Place(label=place_name, type_=type_, role=role, color=color, timed=timed, show=show)   
                 self.places[place.uid] = place   
-
         else:
             for i in range(number):
                 color = i if colored else None
                 transition_name = f"{role} {i}"
-                transition = Transition( label = transition_name, type_=type_ , role =role, color=color, timed=timed ,show=show)  
+                transition = Transition(label=transition_name, type_=type_, role=role, color=color, timed=timed, show=show)  
                 self.transitions[transition.uid] = transition
-
 
     def add_connection(self, parent_role, child_role, contype="p2t", fc=False):
         """
         Add connections (arcs) between nodes in the Petri net.
 
         Parameters:
-            parent_type (str): The type of parent nodes.
-            child_type (str): The type of child nodes.
+            parent_role (str): The role of parent nodes.
+            child_role (str): The role of child nodes.
             contype (str): Connection type ("p2t" for place to transition, "t2p" for transition to place).
             fc (bool): True for a fully connected graph, False for pairwise connections.
         """
@@ -142,119 +142,106 @@ class Petri_build:
             for parent, child in zip(parent_nodes, child_nodes):
                 parent.add_arc(child, parent=False)
                 child.add_arc(parent, parent=True)
-                
 
     def add_tokens(self):
         """
-        Add tokens to the Petri net.
-        Tokens represent job operations .
-        
+        Add tokens to the Petri net. Tokens represent job operations.
         """
-        def cal_time(origin,destination):
-            try : 
-                
-                trans_time =0
-                if origin == None: #load
-                    trans_time=int (self.tran_durations.iloc[0][destination+1])
-                elif destination == None: #Unload
-                     trans_time=int (self.tran_durations.iloc[origin+1][0])
-                elif origin is not destination : # change of machine
-                    trans_time=int (self.tran_durations.iloc[origin+1][destination+1])
+        def cal_time(origin, destination):
+            try:
+                trans_time = 0
+                if origin is None:  # load
+                    trans_time = int(self.tran_durations.iloc[0][destination + 1])
+                elif destination is None:  # Unload
+                    trans_time = int(self.tran_durations.iloc[origin + 1][0])
+                elif origin != destination:  # change of machine
+                    trans_time = int(self.tran_durations.iloc[origin + 1][destination + 1])
                 return trans_time
-            
-            except : 
+            except: 
                 return 0
-            
-            
+
         for place in self.places.values():
-            if place.type=="f":
+            if place.type == "f":
                 place.token_container.append(Token())
 
         for job, uid in enumerate(self.filter_nodes("job")):  
-            current_machine=None  
-            try : # only add token to the operation in the instance  (for dynamic variant ) 
-                # operations tokens
-                           
-                for i,(machine,time) in enumerate (self.instance[job]) :
-                    
-                    self.places[uid].token_container.append( Token(initial_place=uid, color=(job, machine),
-                                                                               process_time=time ,
-                                                                               order=i ,
-                                                                               trans_time= cal_time(current_machine,machine),
-                                                                               ))  
-
+            current_machine = None  
+            try:  # Only add token to the operation in the instance (for dynamic variant)
+                for i, (machine, time) in enumerate(self.instance[job]):
+                    self.places[uid].token_container.append(Token(
+                        initial_place=uid, color=(job, machine),
+                        process_time=time, order=i,
+                        trans_time=cal_time(current_machine, machine)
+                    ))  
                     current_machine = copy.copy(machine)
-                    
-       
-                if  self.LU : #add the unload token   
-                    self.places[uid].token_container.append( Token(initial_place=uid, color=(job, None),
-                                                                   process_time=time,
-                                                                   order=i+1 ,
-                                                                   trans_time= cal_time(current_machine,None),
-                                                                   role="u"))         
-            except : 
-                pass # the reserve jobs are empty 
+                if self.LU:  # Add the unload token
+                    self.places[uid].token_container.append(Token(
+                        initial_place=uid, color=(job, None),
+                        process_time=time, order=i + 1,
+                        trans_time=cal_time(current_machine, None),
+                        role="u"
+                    ))         
+            except: 
+                pass  # The reserve jobs are empty
 
-
-    def create_petri(self,LU,show_flags):
-
-        #(genre=, type_=, role, colored timed,show,number)
+    def create_petri(self, LU, show_flags):
+        """
+        Create the Petri net structure.
+        Parameters:
+            LU (bool): If True, include loading and unloading places and transitions.
+            show_flags (bool): If True, show flags for nodes.
+        """
         nodes_layers = [
-            ("place", "f" ,  "job_idle",True, False,show_flags ,self.n_jobs) ,
-            ("place", "b"  , "job", True, False,True , self.n_jobs),  
-            ("trans", "c" ,  "job_select",False,False,True, self.n_jobs),
-            ("place", "b" ,  "selected_jobs",False ,False,True, 1),
-            ("trans", "c",  "agv_select",False,False,True,self.n_agv) ,  
-            ("place", "p" , "agv_transporting",True,True,True,self.n_agv) ,
-            ("place", "f" , "agv_idle",True,False,show_flags,self.n_agv) ,
-            ("trans", "a",  "agv_finish",False,True,True,self.n_agv) , 
-            ("place", "s" , "machine_sorting",False,False,True,1) ,
-            ("trans", "a",  "machine_sort",True,False,True,self.n_machines),
-            ("place", "b" , "machine_buffer",True,False,True, self.n_machines),
-            ("trans", "c",  "machine_allocate",False,False,True,self.n_machines),
-            ("place", "p" , "machine_processing",True,True,True, self.n_machines),
-            ("place", "f" , "machine_idle",True,False,show_flags, self.n_machines),
-            ("trans", "a",  "machine_finish",True,True,True,self.n_machines),
-            ("place", "d" , "delivery",True,False, True,self.n_machines) ,
-
-            ("place", "s" , "job_sorting",False,False, False,1) ,
-            ("trans", "a",  "job_sort",True,False,show_flags,self.n_jobs),
-            ]
-
+            ("place", "f", "job_idle", True, False, show_flags, self.n_jobs),
+            ("place", "b", "job", True, False, True, self.n_jobs),  
+            ("trans", "c", "job_select", False, False, True, self.n_jobs),
+            ("place", "b", "selected_jobs", False, False, True, 1),
+            ("trans", "c", "agv_select", False, False, True, self.n_agv),  
+            ("place", "p", "agv_transporting", True, True, True, self.n_agv),
+            ("place", "f", "agv_idle", True, False, show_flags, self.n_agv),
+            ("trans", "a", "agv_finish", False, True, True, self.n_agv),
+            ("place", "s", "machine_sorting", False, False, True, 1),
+            ("trans", "a", "machine_sort", True, False, True, self.n_machines),
+            ("place", "b", "machine_buffer", True, False, True, self.n_machines),
+            ("trans", "c", "machine_allocate", False, False, True, self.n_machines),
+            ("place", "p", "machine_processing", True, True, True, self.n_machines),
+            ("place", "f", "machine_idle", True, False, show_flags, self.n_machines),
+            ("trans", "a", "machine_finish", True, True, True, self.n_machines),
+            ("place", "d", "delivery", True, False, True, self.n_machines),
+            ("place", "s", "job_sorting", False, False, False, 1),
+            ("trans", "a", "job_sort", True, False, show_flags, self.n_jobs),
+        ]
 
         layers_to_connect = [
             ("job_idle", "job_select", "p2t", False),
             ("job", "job_select", "p2t", False),
             ("job_select", "selected_jobs", "t2p", True),
-            
-            ("selected_jobs","agv_select","p2t", True),
-            ("agv_idle","agv_select","p2t", False),
-            ("agv_select","agv_transporting","t2p", False),   
+            ("selected_jobs", "agv_select", "p2t", True),
+            ("agv_idle", "agv_select", "p2t", False),
+            ("agv_select", "agv_transporting", "t2p", False),   
             ("agv_transporting", "agv_finish", "p2t", False),
-            ("agv_finish","agv_idle", "t2p", False),
+            ("agv_finish", "agv_idle", "t2p", False),
             ("agv_finish", "machine_sorting", "t2p", True),
-            
             ("machine_sorting", "machine_sort", "p2t", True), 
-            ("machine_sort","machine_buffer", "t2p", False),
+            ("machine_sort", "machine_buffer", "t2p", False),
             ("machine_buffer", "machine_allocate", "p2t", False),
-            ("machine_idle","machine_allocate", "p2t", False),
+            ("machine_idle", "machine_allocate", "p2t", False),
             ("machine_allocate", "machine_processing", "t2p", False),
             ("machine_processing", "machine_finish", "p2t", False),
-            ("machine_finish","machine_idle", "t2p", False),
+            ("machine_finish", "machine_idle", "t2p", False),
             ("machine_finish", "delivery", "t2p", False),
             ("machine_finish", "job_sorting", "t2p", True),
-            ("job_sorting" ,"job_sort",  "p2t",True),
+            ("job_sorting", "job_sort", "p2t", True),
             ("job_sort", "job_idle", "t2p", False),
         ]
-        
 
         if self.LU:
-            nodes_layers += [ ("place", "d", "store",False,False,True, 1),("trans", "a", "lu", False,False,True,1)]
-            layers_to_connect  += [("machine_sorting", "lu", "p2t", False), ("lu", "store", "t2p",False)]
+            nodes_layers += [("place", "d", "store", False, False, True, 1), ("trans", "a", "lu", False, False, True, 1)]
+            layers_to_connect += [("machine_sorting", "lu", "p2t", False), ("lu", "store", "t2p", False)]
 
         # Add nodes: places and transitions
-        for genre, type_,role,colored,timed,show ,number in nodes_layers:
-            self.add_nodes_layer(genre=genre,type_=type_,role=role,colored=colored, number=number ,timed=timed ,show=show)    
+        for genre, type_, role, colored, timed, show, number in nodes_layers:
+            self.add_nodes_layer(genre=genre, type_=type_, role=role, colored=colored, number=number, timed=timed, show=show)    
 
         # Add arcs places and transitions
         for parent_role, child_role, contype, full_connect in layers_to_connect:
@@ -263,9 +250,8 @@ class Petri_build:
         # Add jobs tokens
         self.add_tokens()
          
-        print (f"JSSP {self.instance_id}: {self.n_jobs} jobs X {self.n_machines} machines, AGVs:{self.n_agv} , dynamic Mode: {self.dynamic}")
-        
- 
+        print(f"JSSP {self.instance_id}: {self.n_jobs} jobs X {self.n_machines} machines, AGVs: {self.n_agv}, dynamic Mode: {self.dynamic}")
+
    
 # %% Test
 if __name__ == "__main__":

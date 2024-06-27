@@ -1,4 +1,4 @@
-import copy 
+import copy
 
 class IdGen:
     """
@@ -7,7 +7,13 @@ class IdGen:
     uid_counter = 0
 
     @classmethod
-    def generate_uid(cls):     
+    def generate_uid(cls):
+        """
+        Generate a unique ID.
+
+        Returns:
+            str: Unique ID generated.
+        """
         uid = cls.uid_counter
         cls.uid_counter += 1
         return str(uid)
@@ -19,41 +25,39 @@ class Place:
     Attributes:
         uid (str): Unique identifier for the place.
         label (str): Name or label of the place.
-        type (str): Type the place.
-        role (str): Role of the place example : machine processing .
+        type (str): Type of the place (e.g., 'p' for process, 'f' for flag).
+        role (str): Role of the place (e.g., machine processing).
         parents (list): List of parent nodes (transitions).
         children (list): List of child nodes (transitions).
         token_container (list): List of tokens currently in the place.
         color: Color attribute for the place.
+        timed (bool): Whether the place is timed.
+        show (bool): Whether the place is visible.
     """
 
-    def __init__(self, label, type_="",role="" , color=None, timed=False, show=True):
+    def __init__(self, label, type_="", role="", color=None, timed=False, show=True):
         """
         Initialize a place.
 
         Parameters:
             label (str): Name or label of the place.
-            type (str): type of the place p for process , f for flag .
-            role (str): Role of the place example machine processing .
+            type_ (str): Type of the place (e.g., 'p' for process, 'f' for flag).
+            role (str): Role of the place (e.g., machine processing).
             color: Color attribute for the place.
+            timed (bool): Whether the place is timed.
+            show (bool): Whether the place is visible.
         """
         self.uid = IdGen.generate_uid()
         self.label = label
         self.type = type_
-        self.role = role 
+        self.role = role
         self.color = color
         self.timed = timed
-        self.enabled = False   
-      
-
+        self.enabled = False
         self.parents = []
         self.children = []
         self.token_container = []
-        
-        
-        self.show=show
-
-     
+        self.show = show
 
     def add_arc(self, node, parent=True):
         """
@@ -75,25 +79,25 @@ class Place:
         Returns:
             str: A string representing the place.
         """
-        return f"Place name: {self.label}, Type: {self.type}, Role: {self.role}, Tokens: {len(self.token_container)}, color: {self.color}, parents: {[p.uid for p in self.parents]}, children: {[c.uid for c in self.children]}, id: {self.uid}"
+        return f"Place name: {self.label}, Type: {self.type}, Role: {self.role}, Tokens: {len(self.token_container)}, Color: {self.color}, Parents: {[p.uid for p in self.parents]}, Children: {[c.uid for c in self.children]}, ID: {self.uid}"
 
-             
     def tick(self):
+        """
+        Perform a time tick for tokens in the place.
+        """
         if self.token_container:
             for token in self.token_container:
                 last_logging = list(token.logging.keys())[-1]
-                token.logging[last_logging][2] += 1   # elapsed time increament  
-                
-                
-                
+                token.logging[last_logging][2] += 1  # increment elapsed time
+
     def error_check(self):
-        if self.token_container and self.color!=None:   
+        """
+        Check for errors in token color matching.
+        """
+        if self.token_container and self.color is not None:
             for token in self.token_container:
-                if self.color != token.color[1] :
-                    print(f" wrong token detected in place {self.label} ")
-                     
-                    
-                    
+                if self.color != token.color[1]:
+                    print(f"Wrong token detected in place {self.label}")
 
 class Transition:
     """
@@ -102,36 +106,38 @@ class Transition:
     Attributes:
         uid (str): Unique identifier for the transition.
         label (str): Name or label of the transition.
-        type (str): Type  of the transition example : c : controllable / a : automatic 
-        role (str): role of the transition example : allocate .
+        type (str): Type of the transition (e.g., 'c' for controllable, 'a' for automatic).
+        role (str): Role of the transition (e.g., allocate).
         color: Color attribute for the transition.
         parents (list): List of parent nodes (places).
         children (list): List of child nodes (places).
         enabled (bool): Flag indicating whether the transition is enabled.
+        timed (bool): Whether the transition is timed.
+        show (bool): Whether the transition is visible.
     """
 
-    def __init__(self, label, type_="",role =""  ,color=None,timed=False ,show=True):
+    def __init__(self, label, type_="", role="", color=None, timed=False, show=True):
         """
         Initialize a transition.
 
         Parameters:
             label (str): Name or label of the transition.
-            role (str): Type or role of the transition.
+            type_ (str): Type or role of the transition.
+            role (str): Role of the transition (e.g., allocate).
             color: Color attribute for the transition.
+            timed (bool): Whether the transition is timed.
+            show (bool): Whether the transition is visible.
         """
         self.uid = IdGen.generate_uid()
         self.label = label
         self.type = type_
-        self.role = role 
+        self.role = role
         self.color = color
         self.timed = timed
-        self.enabled = False   
-       
+        self.enabled = False
         self.parents = []
         self.children = []
-        self.show=show
-        
-
+        self.show = show
 
     def add_arc(self, node, parent=True):
         """
@@ -146,45 +152,44 @@ class Transition:
         else:
             self.children.append(node)
 
-    def __str__(self):  
-        return f"Transition name: {self.label}, Type: {self.type}, Role: {self.role}, color: {self.color}, parents: {[p.uid for p in self.parents]}, children: {[c.uid for c in self.children]}, id: {self.uid}"
+    def __str__(self):
+        """
+        Get a string representation of the transition.
 
+        Returns:
+            str: A string representing the transition.
+        """
+        return f"Transition name: {self.label}, Type: {self.type}, Role: {self.role}, Color: {self.color}, Parents: {[p.uid for p in self.parents]}, Children: {[c.uid for c in self.children]}, ID: {self.uid}"
 
+    def check_state(self):
+        """
+        Check the state of the transition to determine if it is enabled.
+        """
+        if self.color is None:  # non-colored transition
+            self.enabled = all(parent.token_container for parent in self.parents)
+        else:  # colored transition (sorting trans)
+            tokens_available = all(parent.token_container for parent in self.parents)
+            token = self.parents[0].token_container[0]
+            self.enabled = tokens_available and token.color[1] == self.color
 
-    def check_state(self) :
-        if self.color==None : # non colored transition
-            self.enabled = all(parent.token_container for parent in self.parents)  
-            
-        else : #colored transition  (sorting trans)
-            tokens_available = all(parent.token_container for parent in self.parents)  
-            token=self.parents[0].token_container[0] 
-            self.enabled= tokens_available and token.color[1]==self.color
+    def fire(self, clock=0):
+        """
+        Fire the transition to move tokens from parent places to child places.
 
-
-    def fire (self,clock=0):
-            """
-            Transfers a token from one place to another.
-
-            Parameters:
-                origin: Origin place.
-                destination: Destination place.
-                current_clock (int): Current simulation clock.
-            """
-            for parent in self.parents:      
-                if parent.token_container:
-                
-                    if parent.type=="f" :   # its idle flag
-                        parent.token_container.pop(0)   
-                    else:  
-                        token = copy.copy(parent.token_container[0])
-                        token.logging[parent.uid][1] = clock 
-                        
-                        for child in self.children:  
-                            token.logging[child.uid] = [clock, 0, 0]  # new place  
-                            child.token_container.append(token)
-    
-                        parent.token_container.pop(0)
-        
+        Parameters:
+            clock (int): The current simulation clock.
+        """
+        for parent in self.parents:
+            if parent.token_container:
+                if parent.type == "f":  # it's idle flag
+                    parent.token_container.pop(0)
+                else:
+                    token = copy.copy(parent.token_container[0])
+                    token.logging[parent.uid][1] = clock
+                    for child in self.children:
+                        token.logging[child.uid] = [clock, 0, 0]  # new place
+                        child.token_container.append(token)
+                    parent.token_container.pop(0)
 
 class Token:
     """
@@ -193,36 +198,39 @@ class Token:
     Attributes:
         uid (str): Unique identifier for the token.
         color (tuple): Tuple representing the color of the token (job_color, machine_color).
-        features (list) : a list containing the features of the token feature [0] is reserved for processing time
-        order (int): Order of  the operation in the job  .
+        order (int): Order of the operation in the job.
+        process_time (int): Time taken for the token's process.
+        trans_time (int): Transportation time for the token to move between machines.
         logging (dict): Dictionary for logging entry time, leave time, and elapsed time for each place.
     """
 
-    def __init__(self, initial_place="",type_="",role="op", color=(None, None), order=0,process_time=0  , trans_time=0 ):
+    def __init__(self, initial_place="", type_="", role="op", color=(None, None), order=0, process_time=0, trans_time=0):
         """
         Initialize a token.
 
         Parameters:
-            initial_place: The initial place where the token is located.
-            type (str) : colored / non colored
-            role (str): can be op: operation , lu : load/ unload , f:  flag ....  
+            initial_place (str): The initial place where the token is located.
+            type_ (str): Type of the token (e.g., colored, non-colored).
+            role (str): Role of the token (e.g., op: operation, lu: load/unload, f: flag).
             color (tuple): Tuple representing the color of the token (job_color, machine_color).
-            order (int): Order of the token.
+            order (int): Order of the operation in the job.
             process_time (int): Time taken for the token's process.
-            transportation_time (int) : the time the operation take to move from  machine to another if not given = 0
-            logging (dict) : a logging of every place the token went throught 
+            trans_time (int): Transportation time for the token to move between machines.
         """
-        
         self.uid = IdGen.generate_uid()
         self.order = order
-        self.type=type_
+        self.type = type_
         self.role = role
         self.color = color
-        self.trans_time=trans_time
         self.process_time = process_time
+        self.trans_time = trans_time
         self.logging = {initial_place: [0, 0, 0]}  # entry time, leave time, elapsed time
-   
 
     def __str__(self):
+        """
+        Get a string representation of the token.
 
-        return f"id: {self.uid}, Order: {self.order}, Type: {self.type}, Color: {self.color}, Process_time: {self.process_time}, Trans_time :{self.trans_time}, Logging: {self.logging}"
+        Returns:
+            str: A string representing the token.
+        """
+        return f"ID: {self.uid}, Order: {self.order}, Type: {self.type}, Color: {self.color}, Process Time: {self.process_time}, Trans Time: {self.trans_time}, Logging: {self.logging}"
