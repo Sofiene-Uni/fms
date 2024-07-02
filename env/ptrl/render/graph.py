@@ -23,6 +23,11 @@ class Graph():
         # Add places
         places_by_role = {}
         for place in self.sim.places.values():
+            
+            label=""
+            if place.token_container:
+                for token in place.token_container:
+                    label=label+str(token.color)
 
             if place.show:
                 if place.type  in ["p"]:

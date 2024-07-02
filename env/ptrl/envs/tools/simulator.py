@@ -134,13 +134,18 @@ class Simulator(Petri_build):
                 for transition in place.children:
                     if token.color[color_criterion_index] == transition.color:
                         transition.fire(clock=self.clock)
-        
+                        break
+                else:
+                    place.token_container.remove(token)
+                    #print(f"Token color :{token.color} destroyed in {place.role} - No compatible destination found!")
+                        
+                    
         for place in (p for p in self.places.values() if p.type == "s"):
             if place.role == "job_sorting":
                 process_tokens(place, 0)
-            elif place.role == "machine_sorting":
+            elif place.role in  ["machine_sorting", "machine_sorting_T"] :
                 process_tokens(place, 1)
-            elif place.role == "request_sorting":
+            elif place.role in  ["request_sorting" , "tools_sorting"]:
                 process_tokens(place, 2)
                 
                 
@@ -159,8 +164,7 @@ class Simulator(Petri_build):
        Returns:
            list: List of UIDs of transitions that fired.
        """
-        
-        self.time_tick()
+
         fired_transitions = []
         
         def process_tokens(place, time_criterion):
@@ -183,9 +187,9 @@ class Simulator(Petri_build):
             elif place.role == "machine_processing":
                 process_tokens(place, "process_time")
     
-    
+     
         self.refresh_state()
-    
+        
         self.delivery_history[self.clock] = [
             token for place in self.places.values() if place.type == "d" for token in place.token_container
         ]
@@ -200,13 +204,12 @@ class Simulator(Petri_build):
         Returns:
             list: List of boolean masks indicating enabled transitions.
         """
-                
+        
         self.refresh_state()
         mask =[t.enabled for t in self.transitions.values() if t.type == "c"]
         return mask   
         
-                
-    
+
     def fire_controlled(self, action):
         """
        Fires a colored transition based on the provided action if it is enabled.
@@ -218,12 +221,13 @@ class Simulator(Petri_build):
         
         fire_transitions=[]  
         if action in  [index for index, value in enumerate(self.action_masks()) if value]:
-            self.interaction_counter += 1 
+               
             transition = self.action_map[int(action)] 
             transition.fire(clock=self.clock)
             fire_transitions.append(transition.uid)
             
             self.refresh_state()
+            self.interaction_counter += 1 
  
         return fire_transitions
             
@@ -250,6 +254,7 @@ class Simulator(Petri_build):
         self.graph.plot_net(fired_controlled) if screenshot else None
 
         while sum(self.action_masks()) == 0:   
+            self.time_tick()
             fired_timed = self.fire_timed()
             self.graph.plot_net(fired_timed) if screenshot else None
 

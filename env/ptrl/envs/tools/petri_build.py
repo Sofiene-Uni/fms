@@ -49,8 +49,9 @@ class Petri_build:
             self.n_jobs, self.n_machines = size
         
         self.tran_durations = load_trans(self.n_machines, benchmark=benchmark)
-        self.LU = True  # Placeholder for a setting
         
+        
+        self.LU = True  # 
         self.create_petri(LU=self.LU, show_flags=True)
 
     def __str__(self):
@@ -101,7 +102,7 @@ class Petri_build:
 
         print("Node not found!")
 
-    def add_nodes_layer(self, genre="place", type_="", role="", colored=True, timed=False, show=True, number=1):
+    def add_nodes_layer(self, genre="place", type_="", role="",rank=0, colored=True, timed=False, show=True, number=1):
         """
         Add a layer of nodes (places or transitions) to the Petri net.
 
@@ -118,13 +119,13 @@ class Petri_build:
             for i in range(number):
                 color = i if colored else None
                 place_name = f"{role} {i}"
-                place = Place(label=place_name, type_=type_, role=role, color=color, timed=timed, show=show)
+                place = Place(label=place_name, type_=type_, role=role,rank=rank, color=color, timed=timed, show=show)
                 self.places[place.uid] = place
         else:
             for i in range(number):
                 color = i if colored else None
                 transition_name = f"{role} {i}"
-                transition = Transition(label=transition_name, type_=type_, role=role, color=color, timed=timed, show=show)
+                transition = Transition(label=transition_name, type_=type_, role=role,rank=rank, color=color, timed=timed, show=show)
                 self.transitions[transition.uid] = transition
 
     def add_connection(self, parent_role, child_role, contype="p2t", fc=False):
@@ -184,7 +185,7 @@ class Petri_build:
                     self.places[uid].token_container.append(
                         Token(initial_place=uid, color=(job, machine,tool),
                               process_time=time,
-                              order=i,
+                              rank=i,
                               trans_time=calc_time(current_machine, machine),
                               ))
 
@@ -192,9 +193,9 @@ class Petri_build:
 
                 if self.LU:  # Add unload token
                     self.places[uid].token_container.append(
-                        Token(initial_place=uid, color=(job, None),
+                        Token(initial_place=uid, color=(job, None ,None ),
                               process_time=time,
-                              order=i + 1,
+                              rank=i + 1,
                               trans_time=calc_time(current_machine, None),
                               role="u"))
             except:
@@ -208,42 +209,46 @@ class Petri_build:
             LU (bool): If True, include load and unload operations.
             show_flags (bool): If True, show flags in node creation.
         """
-        nodes_layers = [
-            ("place", "f", "job_idle", True, False, show_flags, self.n_jobs),
-            ("place", "b", "job", True, False, True, self.n_jobs),
-            ("trans", "c", "job_select", False, False, True, self.n_jobs),
-            ("place", "b", "selected_jobs", False, False, True, 1),
-            ("trans", "c", "agv_select", False, False, True, self.n_agv),
-            ("place", "p", "agv_transporting", True, True, True, self.n_agv),
-            ("place", "f", "agv_idle", True, False, show_flags, self.n_agv),
-            ("trans", "a", "agv_finish", False, True, True, self.n_agv),
-            ("place", "s", "machine_sorting", False, False, True, 1),
-            ("trans", "a", "machine_sort", True, False, True, self.n_machines),
-            ("place", "b", "machine_buffer", True, False, True, self.n_machines),
-            ("trans", "c", "machine_allocate", False, False, True, self.n_machines),
-            ("place", "p", "machine_processing", True, True, True, self.n_machines),
-            ("place", "f", "machine_idle", True, False, show_flags, self.n_machines),
-            ("trans", "a", "machine_finish", True, True, True, self.n_machines),
-            ("place", "d", "delivery", True, False, True, self.n_machines),
-            ("place", "s", "job_sorting", False, False, False, 1),                    #
-            ("trans", "a", "job_sort", True, False, show_flags, self.n_jobs),
+
             
-            ("place", "s", "request_sorting", False, False, True, 1),
-            ("trans", "a", "request_sort", True, False, True, self.n_tools),
-            ("place", "b", "tool_request", True, False, True, self.n_tools),
-            ("place", "f", "tool_idle", True, False, show_flags, self.n_tools),
-            ("trans", "c", "tool_select", False, False, True, self.n_tools),
-            ("place", "f", "tool_transport_idle", False, False, show_flags, 1),
-            ("place", "b", "tool_transport_buffer", True, False, True, self.n_tt),
-            ("trans", "a", "tool_transport", False, False, True, self.n_tt),
-            ("place", "p", "tool_transporting", True, True, True, self.n_tt),
-            ("trans", "a", "transport_finish", False, True, True, self.n_tt),
-            ("place", "s", "machine_sorting_T", False, False, True, 1),
-            ("trans", "a", "machine_sort_T", True, False, True, self.n_machines),
-            ("place", "b", "machine_buffer_T", True, False, True, self.n_machines),
-            ("place", "s", "tools_sorting", False, False, False, 1),                  #
-            ("trans", "a", "tool_sort", True, False, show_flags, self.n_tools),
-        ]
+   
+        nodes_layers = [
+                ("place", "f", "job_idle", 0, True, False, show_flags, self.n_jobs),
+                ("place", "b", "job", 1, True, False, True, self.n_jobs),
+                ("trans", "c", "job_select", 0, False, False, True, self.n_jobs),
+                ("place", "b", "selected_jobs", 1, False, False, True, 1),
+                ("trans", "c", "agv_select", 0, False, False, True, self.n_agv),
+                ("place", "p", "agv_transporting", 1, True, True, True, self.n_agv),
+                ("place", "f", "agv_idle", 0, True, False, show_flags, self.n_agv),
+                ("trans", "a", "agv_finish", 0, False, True, True, self.n_agv),
+                ("place", "s", "machine_sorting", 1, False, False, True, 1),
+                ("trans", "a", "machine_sort", 0, True, False, True, self.n_machines),
+                ("place", "b", "machine_buffer", 1, True, False, True, self.n_machines),
+                ("trans", "c", "machine_allocate", 0, False, False, True, self.n_machines),
+                ("place", "p", "machine_processing", 1, True, True, True, self.n_machines),
+                ("place", "f", "machine_idle", 0, True, False, show_flags, self.n_machines),
+                ("trans", "a", "machine_finish", 0, True, True, True, self.n_machines),
+                ("place", "d", "delivery", 0, True, False, True, self.n_machines),
+                ("place", "s", "job_sorting", 1, False, False, False, 1),  
+                
+                ("trans", "a", "job_sort", 0, True, False, show_flags, self.n_jobs),
+                ("place", "s", "request_sorting", 0, False, False, True, 1),
+                ("trans", "a", "request_sort", 0, True, False, True, self.n_tools),
+                ("place", "b", "tool_request", 1, True, False, True, self.n_tools),
+                ("place", "f", "tool_idle", 0, True, False, show_flags, self.n_tools),
+                ("trans", "c", "tool_select", 0, False, False, True, self.n_tools),
+                ("place", "f", "tool_transport_idle", 0, False, False, show_flags, self.n_tt),
+                ("place", "b", "tool_transport_buffer", 0, True, False, True, self.n_tt),
+                ("trans", "c", "tool_transport", 0, False, False, True, self.n_tt),
+                ("place", "p", "tool_transporting", 1, True, True, True, self.n_tt),
+                ("trans", "a", "transport_finish", 0, False, True, True, self.n_tt),
+                ("place", "s", "machine_sorting_T", 1, False, False, True, 1),
+                ("trans", "a", "machine_sort_T", 0, True, False, True, self.n_machines),
+                ("place", "b", "machine_buffer_T", 0, True, False, True, self.n_machines),
+                ("place", "s", "tools_sorting", 1, False, False, False, 1),  
+                ("trans", "a", "tool_sort", 0, True, False, show_flags, self.n_tools)
+            ]
+        
 
         layers_to_connect = [
             ("job_idle", "job_select", "p2t", False),
@@ -288,12 +293,12 @@ class Petri_build:
         ]
 
         if LU:
-            nodes_layers += [("place", "d", "store", False, False, True, 1), ("trans", "a", "lu", False, False, True, 1)]
+            nodes_layers += [("place", "d", "store",0, False, False, True, 1), ("trans", "a", "lu",0, False, False, True, 1)]
             layers_to_connect += [("machine_sorting", "lu", "p2t", False), ("lu", "store", "t2p", False)]
 
         # Add nodes (places and transitions)
-        for genre, type_, role, colored, timed, show, number in nodes_layers:
-            self.add_nodes_layer(genre=genre, type_=type_, role=role, colored=colored, timed=timed, show=show, number=number)
+        for genre,type_, role,rank, colored, timed, show, number in nodes_layers:
+            self.add_nodes_layer(genre=genre, type_=type_, role=role,rank=rank, colored=colored, timed=timed, show=show, number=number)
 
         # Add arcs (places and transitions)
         for parent_role, child_role, contype, full_connect in layers_to_connect:

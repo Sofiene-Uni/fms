@@ -3,8 +3,8 @@ from gymnasium import Env
 from gymnasium import spaces
 
 from ptrl.envs.tools.simulator import Simulator
-from ptrl.render.plot_fms import plot_solution,plot_job
-from ptrl.utils.obs_fms import get_obs
+from ptrl.render.plot_tools import plot_solution,plot_job
+from ptrl.utils.obs_tools import get_obs
 
 
 class ToolsEnv(Env):
@@ -12,11 +12,11 @@ class ToolsEnv(Env):
     """
     Custom Gym environment for Job Shop Scheduling using a Petri net simulator.
     """
-    metadata = {"render_modes": ["solution"]}
+    metadata = {"render_modes": ["solution" , "human"]}
 
     def __init__(self, 
                  instance_id :str ,
-                 render_mode: bool =None,
+                 render_mode: str ="solution",
                  observation_depth:int =1, 
                  dynamic: bool=False,
                  size=(None,None),
@@ -107,7 +107,7 @@ class ToolsEnv(Env):
         Returns:
             tuple: New observation, reward, termination status, info.
         """
-        fired = self.sim.interact(action)  
+        fired = self.sim.interact(action,screenshot= True if self.render_mode == "human" else False)  
         observation = get_obs(self)
         terminated= self.sim.is_terminal()
         reward = self.reward(terminated)
@@ -120,12 +120,20 @@ class ToolsEnv(Env):
         Render the environment.
         """
         rank=False
-        if self.render_mode == "solution":
+        if self.render_mode ==  "solution":
             plot_solution(self.sim,show_rank=rank,format_=format_,dpi=dpi)
             if job_zoom :
                 for i in range (self.sim.n_jobs):
                     plot_job(self.sim,job=i,format_=format_,dpi=dpi)
-         
+                    
+        
+        if self.render_mode == "human":
+            plot_solution(self.sim,show_rank=rank,format_=format_,dpi=dpi)
+            
+            # lunch GUI to display imag sequence , TO DO 
+ 
+                    
+        
                      
     def close(self):
         """
@@ -140,7 +148,7 @@ class ToolsEnv(Env):
 
 if __name__ == "__main__":
     
-    instance="bu01"
+    instance="ra01"
     agvs=2
     tools_transport=1
     
