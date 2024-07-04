@@ -76,15 +76,20 @@ class ToolsEnv(Env):
             Returns:
                 float: Calculated feedback.
             """   
-            role,max_resources= ("machine_idle",self.sim.n_machines)
-            #role,max_resources= ("agv_idle",self.sim.n_agv)
             
-            idle_places =  [p for p in self.sim.places.values() if p.uid in self.sim.filter_nodes(role)]
-            idle_resource = sum(1 for resource in idle_places if resource.token_container)
-            util = - (idle_resource /max_resources )
-            return util
+            def calculate_utilization(role, max_resources):
+               idle_places = [p for p in self.sim.places.values() if p.uid in self.sim.filter_nodes(role)]
+               idle_resource = sum(1 for resource in idle_places if resource.token_container)
+               utilization = - (idle_resource / max_resources)
+               return utilization
+
+            machine_util = calculate_utilization("machine_idle", self.sim.n_machines)
+            agv_util = calculate_utilization("agv_idle", self.sim.n_agv)
+            
+            return (machine_util + agv_util) / 2
+        
     
-        #return utilization_reward()
+        #return utilization_reward(self)
         
         if terminal :
             return -self.sim.clock
@@ -129,12 +134,10 @@ class ToolsEnv(Env):
         
         if self.render_mode == "human":
             plot_solution(self.sim,show_rank=rank,format_=format_,dpi=dpi)
-            
             # lunch GUI to display imag sequence , TO DO 
  
                     
-        
-                     
+   
     def close(self):
         """
         Close the environment.

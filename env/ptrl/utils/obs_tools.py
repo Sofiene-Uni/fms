@@ -19,7 +19,7 @@ def get_obs(env):
     for level in range(env.observation_depth):     
        for job in jobs :
            if job.token_container and level < len(job.token_container):
-               observation.extend([job.color, int(job.token_container[level].process_time)])
+               observation.extend([job.color, int(job.token_container[level].time_features[0])])
            else:
                observation.extend([job.color, 0])
                
@@ -31,7 +31,7 @@ def get_obs(env):
        else:
            token= agv.token_container[0]
            elapsed=token.logging[list(token.logging.keys())[-1]][2]
-           remaining_time =token.trans_time - elapsed
+           remaining_time =token.time_features[1] - elapsed
            observation.extend([agv.color, remaining_time if remaining_time  >=0  else 0])
         
     
@@ -42,7 +42,7 @@ def get_obs(env):
        else:
            token=machine.token_container[0]
            elapsed=token.logging[list(token.logging.keys())[-1]][2]
-           remaining_time =token.process_time - elapsed
+           remaining_time =token.time_features[0] - elapsed
            observation.extend([machine.color, remaining_time if remaining_time  >=0  else 0])
  
     

@@ -40,13 +40,14 @@ def plot_solution(jssp, show_rank=False, format_="jpg", dpi=300):
                 agv_data_dict["token_role"].append(token.role)
                 agv_data_dict["entry_values"].append(entry[0])
                 agv_data_dict["process_times"].append(entry[2])
-                
+           
             if place in jssp.filter_nodes("tool_transporting"):
                 tt_data_dict["tt_id"].append(f"TT {jssp.places[place].color}")
                 tt_data_dict["jobs"].append(token.color[0])
                 tt_data_dict["token_rank"].append(token.rank)
                 tt_data_dict["entry_values"].append(entry[0])
                 tt_data_dict["process_times"].append(entry[2])
+    
 
     # Generate colors for jobs
     unique_jobs = list(set(jssp_data_dict["jobs"] + agv_data_dict["jobs"] + tt_data_dict["jobs"]))

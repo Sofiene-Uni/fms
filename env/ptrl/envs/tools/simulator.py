@@ -133,7 +133,7 @@ class Simulator(Petri_build):
             for token in place.token_container.copy():
                 for transition in place.children:
                     if token.color[color_criterion_index] == transition.color:
-                        transition.fire(clock=self.clock)
+                        transition.fire(self.instance,self.clock)
                         break
                 else:
                     place.token_container.remove(token)
@@ -147,16 +147,20 @@ class Simulator(Petri_build):
                 process_tokens(place, 1)
             elif place.role in  ["request_sorting" , "tools_sorting"]:
                 process_tokens(place, 2)
+    
                 
-                
+   
+     
     def refresh_state(self):
         """
        Refreshes the state of the Petri net after sorting tokens and checking enabled transitions.
        """
+
         self.sort_tokens()
+
         for transition in self.action_map.values(): 
             transition.check_state()
-                
+            
 
     def fire_timed(self):
         """
@@ -172,22 +176,27 @@ class Simulator(Petri_build):
                 return 
             
             transition = place.children[0]
-            token = place.token_container[0]
-            elapsed_time = next(reversed(token.logging.values()))[2]
+            token = place.token_container[0]      
+            elapsed_time = token.logging[place.uid][2]
+            
 
-            if elapsed_time >= getattr(token, time_criterion):
-                transition.fire(clock=self.clock)
+            if elapsed_time >=token.time_features[time_criterion] :
+                transition.fire(self.instance,self.clock)
                 fired_transitions.append(transition.uid)
     
 
-        for place in (p for p in self.places.values() if p.type == "p"):    
-            if place.role in ["agv_transporting", "tool_transporting"]:
-                process_tokens(place, "trans_time")
+        for place in (p for p in self.places.values() if p.type == "p"):  
+            
+            if place.role == "machine_processing":
+                process_tokens(place, 0)
                 
-            elif place.role == "machine_processing":
-                process_tokens(place, "process_time")
-    
-     
+            elif place.role in ["agv_transporting"]:
+                process_tokens(place, 1)
+                
+            elif place.role in [ "tool_transporting"]:
+                 process_tokens(place, 2)
+                
+
         self.refresh_state()
         
         self.delivery_history[self.clock] = [
@@ -220,14 +229,15 @@ class Simulator(Petri_build):
        """
         
         fire_transitions=[]  
-        if action in  [index for index, value in enumerate(self.action_masks()) if value]:
-               
-            transition = self.action_map[int(action)] 
-            transition.fire(clock=self.clock)
+     
+        transition = self.action_map[int(action)] 
+        
+        if all(parent.token_container for parent in transition.parents):
+            transition.fire(self.instance,self.clock)
             fire_transitions.append(transition.uid)
-            
-            self.refresh_state()
-            self.interaction_counter += 1 
+        
+        self.refresh_state()
+        self.interaction_counter += 1 
  
         return fire_transitions
             
@@ -250,7 +260,7 @@ class Simulator(Petri_build):
             screenshot (bool): If True, generates a plot of the Petri net after each interaction (default: False).
         """
     
-        fired_controlled = self.fire_controlled(action) 
+        fired_controlled = self.fire_controlled(action)  
         self.graph.plot_net(fired_controlled) if screenshot else None
 
         while sum(self.action_masks()) == 0:   

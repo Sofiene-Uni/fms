@@ -1,4 +1,5 @@
 import copy
+from collections import defaultdict
 
 class IdGen:
     """
@@ -35,7 +36,7 @@ class Place:
         show (bool): Whether the place is visible.
     """
 
-    def __init__(self, label, type_="", role="",rank=0, color=None, timed=False, show=True):
+    def __init__(self, label, type_="", role="", color=None, timed=False, show=True):
         """
         Initialize a place.
 
@@ -54,12 +55,17 @@ class Place:
         self.color = color
         self.timed = timed
         self.enabled = False
-        self.rank=rank
         
+
         self.parents = []
         self.children = []
         self.token_container = []
         self.show = show
+        
+        
+        self.logging = {None: [0, 0, 0]}
+        
+        
 
     def add_arc(self, node, parent=True):
         """
@@ -88,9 +94,9 @@ class Place:
         Perform a time tick for tokens in the place.
         """
         if self.token_container:
-            for token in self.token_container:
-                last_logging = list(token.logging.keys())[-1]
-                token.logging[last_logging][2] += 1  # increment elapsed time
+            for token in self.token_container:  
+                token.logging[self.uid][2]+= 1 
+                
 
     def error_check(self):
         """
@@ -118,7 +124,7 @@ class Transition:
         show (bool): Whether the transition is visible.
     """
 
-    def __init__(self, label, type_="", role="",rank=0, color=None, timed=False, show=True):
+    def __init__(self, label, type_="", role="", color=None, timed=False, show=True):
         """
         Initialize a transition.
 
@@ -137,7 +143,7 @@ class Transition:
         self.color = color
         self.timed = timed
         self.enabled = False
-        self.rank=rank
+
         
         self.parents = []
         self.children = []
@@ -172,25 +178,38 @@ class Transition:
         self.enabled=all(parent.token_container for parent in self.parents)
         return  self.enabled
     
-    def fire(self, clock=0):
+    
+    def fire(self, instance, clock=0):
         """
         Fire the transition to move tokens from parent places to child places.
-
         Parameters:
             clock (int): The current simulation clock.
         """
-
-        for parent in self.parents:
-            if parent.type!="f" :
-                token=  parent.token_container[0]
-            parent.token_container.pop(0)
-            
-        for child in self.children: 
-            if child.type!="f" :
-                token.logging[child.uid] = [clock, 0, 0]  # new place
-                child.token_container.append(token)
-            else :
-                child.token_container.append(Token(self))
+        
+        def get_times(token,history):
+            if self.role == "job_select":
+                token.time_features[1] = instance.get_time(history.color[1], token.color[1], time_type=1)
+            elif self.role == "tool_select":
+                token.time_features[2] = instance.get_time(history.color[1], token.color[1], time_type=2)
+            return token
+        
+        
+        def merge_tokkens(tokens_list):         
+            token=tokens_list[0]  
+            for token_to_add in tokens_list:
+                token.logging.update(token_to_add.logging)         
+            return token 
+        
+        
+        history = next((parent.token_container.pop(0) for parent in self.parents if parent.type == "f"),None )
+        tokens_list = [parent.token_container.pop(0) for parent in self.parents if parent.type != "f"]
+                   
+        token = merge_tokkens(tokens_list)     
+        token = get_times(token,history)
+        
+        for child in self.children:
+            token.logging[child.uid] = [clock, 0, 0]
+            child.token_container.append(token)
                 
 
 class Token:
@@ -206,7 +225,7 @@ class Token:
         logging (dict): Dictionary for logging entry time, leave time, and elapsed time for each place.
     """
 
-    def __init__(self, initial_place="", type_="", role="op",rank=0, color=(None), process_time=0, trans_time=0):
+    def __init__(self, initial_place="", type_="", role="op",rank=0, color=(None,None,None), time_features=[0,0,0]):
         """
         Initialize a token.
 
@@ -224,9 +243,11 @@ class Token:
         self.type = type_
         self.role = role
         self.color = color
-        self.process_time = process_time
-        self.trans_time = trans_time
+        
+        self.time_features=time_features  # 0 :process_time  1:agv_transport 2: tool_transport 
         self.logging = {initial_place: [0, 0, 0]}  # entry time, leave time, elapsed time
+        
+ 
 
     def __str__(self):
         """
@@ -235,4 +256,4 @@ class Token:
         Returns:
             str: A string representing the token.
         """
-        return f"ID: {self.uid}, Rank: {self.rank}, Type: {self.type}, Color: {self.color}, Process Time: {self.process_time}, Trans Time: {self.trans_time}, Logging: {self.logging}"
+        return f"ID: {self.uid}, Rank: {self.rank}, Type: {self.type}, Color: {self.color}, Time features: {self.time_features}, Logging: {self.logging}"

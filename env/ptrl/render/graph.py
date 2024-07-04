@@ -10,16 +10,10 @@ class Graph():
         dot = Digraph(comment='Petri Net')
         dot.attr(label=f'Time Step: {self.sim.clock}', fontsize='20', labelloc='t')
         
-      
-        
+
         #str(place.token_container[0].color) if place.token_container else "0"
         
-        # label=""
-        # if place.token_container:
-        #     for token in place.token_container:
-        #         label=label+str(token.color)
-        
-        
+
         # Add places
         places_by_role = {}
         for place in self.sim.places.values():
@@ -31,7 +25,7 @@ class Graph():
 
             if place.show:
                 if place.type  in ["p"]:
-                    dot.node(place.uid, shape='circle', label= str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='1')
+                    dot.node(place.uid, shape='circle', label= str(label), style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='1')
                 elif place.type in ["b" ,"s"]:
                     dot.node(place.uid, shape='circle', label= str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='1')
                 elif place.type in ["d"]:
