@@ -169,11 +169,13 @@ class Petri_build:
         for job, uid in enumerate(self.filter_nodes("job")):
             try:
                 for i, (machine,tool, process_time) in enumerate(self.instance.job_sequences[job]):
+            
                     self.places[uid].token_container.append(
                         Token(initial_place=uid, color=(job, machine,tool),
                               time_features=[process_time,None,None] ,    # the rest is added later 
                               rank=i))
                             
+        
 
                 if self.LU:  # Add unload token
                     self.places[uid].token_container.append(
@@ -186,7 +188,8 @@ class Petri_build:
                 pass
                 #for dynamic token adding behaviour 
                         
-     
+        
+          
     def create_petri(self, LU, show_flags):
         """
         Create the Petri net structure with predefined nodes and connections.
@@ -196,6 +199,8 @@ class Petri_build:
             show_flags (bool): If True, show flags in node creation.
         """
 
+            
+   
         nodes_layers = [
             ("place", "f", "job_idle",  True, False, show_flags, self.n_jobs),
             ("place", "b", "job", True, False, True, self.n_jobs),
@@ -222,8 +227,9 @@ class Petri_build:
             ("place", "f", "tool_idle",  True, False, show_flags, self.n_tools),
             ("trans", "c", "tool_select",  False, False, True, self.n_tools),
             ("place", "f", "tool_transport_idle",  False, False, show_flags, self.n_tt),
+            ("place", "b", "tool_request_buffer",  True, False, True, 1),
+            ("trans", "c", "tool_transport_select",  False, False, True, self.n_tt),
             ("place", "b", "tool_transport_buffer",  True, False, True, self.n_tt),
-            ("trans", "c", "tool_transport",  False, False, True, self.n_tt),
             ("place", "p", "tool_transporting",  True, True, True, self.n_tt),
             ("trans", "a", "transport_finish",  False, True, True, self.n_tt),
             ("place", "s", "machine_sorting_T",  False, False, True, 1),
@@ -260,13 +266,13 @@ class Petri_build:
             ("request_sort", "tool_request", "t2p", False),
             ("tool_request", "tool_select", "p2t", False),
             ("tool_idle", "tool_select", "p2t", False),
-            ("tool_select", "tool_transport_buffer", "t2p", True),
-            ("tool_transport_buffer", "tool_transport", "p2t", True),
-            ("tool_transport", "tool_transporting", "t2p", True),
+            ( "tool_select", "tool_request_buffer","t2p", True),
+            (  "tool_request_buffer","tool_transport_select","p2t", True),
+            ("tool_transport_select",  "tool_transporting", "t2p", False),
             ("transport_finish", "tool_transport_idle", "t2p", False),
-            ("tool_transport_idle", "tool_transport", "p2t", False),
+            ("tool_transport_idle", "tool_transport_select", "p2t", False),
             ("tool_transporting", "transport_finish", "p2t", False),
-            ("transport_finish", "machine_sorting_T", "t2p", False),
+            ("transport_finish", "machine_sorting_T", "t2p", True),
             ("machine_sorting_T", "machine_sort_T", "p2t", True),
             ("machine_sort_T", "machine_buffer_T", "t2p", False),
             ("machine_buffer_T", "machine_allocate", "p2t", False),

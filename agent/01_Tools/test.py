@@ -49,13 +49,13 @@ def agent_test(agent_id="ra01",instance="ra01",dynamic = False ,size=(None,None)
 if __name__ == "__main__":
     
     instance_id="ra01"
-    timesteps=1e5
+    timesteps=3e5
     
     dynamic,size = False,(10,5)
     n_agv= 2
     n_tt= 1
     
-    render_mode="human"
+    render_mode="solution"
     agent_id=f"{instance_id}-{n_agv}-{n_tt}-{timesteps}"
     
     samples = [agent_test(agent_id,instance=instance_id,dynamic=dynamic,size=size,n_agv=n_agv ,n_tt=n_tt ,render_mode=render_mode) for _ in range(1)]

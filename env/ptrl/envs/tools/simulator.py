@@ -125,7 +125,6 @@ class Simulator(Petri_build):
             0: job, 1: machine, 2 :tools).
         
         """
-        
         def process_tokens(place, color_criterion_index):
             if not  place.token_container:
                 return 
@@ -148,9 +147,7 @@ class Simulator(Petri_build):
             elif place.role in  ["request_sorting" , "tools_sorting"]:
                 process_tokens(place, 2)
     
-                
-   
-     
+
     def refresh_state(self):
         """
        Refreshes the state of the Petri net after sorting tokens and checking enabled transitions.
@@ -179,7 +176,6 @@ class Simulator(Petri_build):
             token = place.token_container[0]      
             elapsed_time = token.logging[place.uid][2]
             
-
             if elapsed_time >=token.time_features[time_criterion] :
                 transition.fire(self.instance,self.clock)
                 fired_transitions.append(transition.uid)

@@ -18,14 +18,14 @@ class Graph():
         places_by_role = {}
         for place in self.sim.places.values():
             
-            label=""
-            if place.token_container:
-                for token in place.token_container:
-                    label=label+str(token.color)
+            # label=""
+            # if place.token_container:
+            #     for token in place.token_container:
+            #         label=label+str(token.color)
 
             if place.show:
                 if place.type  in ["p"]:
-                    dot.node(place.uid, shape='circle', label= str(label), style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='1')
+                    dot.node(place.uid, shape='circle', label= str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='1')
                 elif place.type in ["b" ,"s"]:
                     dot.node(place.uid, shape='circle', label= str(len(place.token_container)), style='filled', fillcolor='white', fontsize='16', width='0.75',penwidth='1')
                 elif place.type in ["d"]:

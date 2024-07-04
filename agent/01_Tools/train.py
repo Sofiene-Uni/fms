@@ -56,7 +56,7 @@ def main():
     dynamic,size=False,(10,5)
 
     n_agv=2
-    n_tt=1
+    n_tt=2
     
     render_mode="solution"
     

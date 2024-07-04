@@ -175,8 +175,19 @@ class Transition:
         """
         Check the state of the transition to determine if it is enabled.
         """  
-        self.enabled=all(parent.token_container for parent in self.parents)
+
+        colors_lists = [set(token.color for token in parent.token_container)  for parent in self.parents if parent.type != "f"]
+        common_found = bool (set.intersection(*colors_lists))
+        
+        available_tokens =all(parent.token_container for parent in self.parents)
+        
+        if len([parent for parent in self.parents if parent.type != "f"])==1:
+            self.enabled = available_tokens  
+        else : # merging resources
+            self.enabled = available_tokens  and common_found
+            
         return  self.enabled
+    
     
     
     def fire(self, instance, clock=0):
@@ -186,26 +197,40 @@ class Transition:
             clock (int): The current simulation clock.
         """
         
-        def get_times(token,history):
+        def get_times(token):
+            
+            history = next((parent.token_container.pop(0) for parent in self.parents if parent.type == "f"),None )
+            
             if self.role == "job_select":
                 token.time_features[1] = instance.get_time(history.color[1], token.color[1], time_type=1)
             elif self.role == "tool_select":
                 token.time_features[2] = instance.get_time(history.color[1], token.color[1], time_type=2)
             return token
         
+  
+        def fuse_tokens():
+            
+            colors_lists = [set(token.color for token in parent.token_container)  for parent in self.parents if parent.type != "f"]
+            common_color = set.intersection(*colors_lists)  # find tokens with same colors
+                
+            sibling_tokens = [token for parent in self.parents for token in parent.token_container if token.color in common_color]
+            fused_token=sibling_tokens[0]
+            
+            for parent in self.parents:  # remove fused tokens from parents  
+                parent.token_container = [token for token in parent.token_container if token.color != fused_token.color]  
+                
+            fused_token.logging= {k: v for token in sibling_tokens for k, v in token.logging.items()} # aggregate loggins
+            
+            return fused_token
         
-        def merge_tokkens(tokens_list):         
-            token=tokens_list[0]  
-            for token_to_add in tokens_list:
-                token.logging.update(token_to_add.logging)         
-            return token 
         
-        
-        history = next((parent.token_container.pop(0) for parent in self.parents if parent.type == "f"),None )
-        tokens_list = [parent.token_container.pop(0) for parent in self.parents if parent.type != "f"]
-                   
-        token = merge_tokkens(tokens_list)     
-        token = get_times(token,history)
+        if len([parent for parent in self.parents if parent.type != "f"])==1:
+            token= [parent.token_container.pop(0) for parent in self.parents if parent.type != "f"][0] 
+        else:
+            token = fuse_tokens() 
+          
+            
+        token = get_times(token)
         
         for child in self.children:
             token.logging[child.uid] = [clock, 0, 0]
