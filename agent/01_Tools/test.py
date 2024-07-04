@@ -7,17 +7,18 @@ from sb3_contrib.common.maskable.utils import get_action_masks
 #%% create environement 
 
 
-def agent_test(agent_id="ta01",instance="ta01",dynamic = False ,size=(None,None) ,n_agv=0,render_mode="solution"):
+def agent_test(agent_id="ra01",instance="ra01",dynamic = False ,size=(None,None) ,n_agv=0,n_tt=0,render_mode="solution"):
     
     local_agent = f"agents/MaskablePPO-{agent_id}.zip"
     global_agent= "agents/MaskablePPO.zip"
     
     env = gym.make("ptrl-tools-v0",
-                   render_mode="solution",
+                   render_mode=render_mode,
                    instance_id=instance_id,
                    dynamic=dynamic,
                    size=size,
-                   n_agv=n_agv
+                   n_agv=n_agv,
+                   n_tt=n_tt
     ).unwrapped
     
     
@@ -47,18 +48,17 @@ def agent_test(agent_id="ta01",instance="ta01",dynamic = False ,size=(None,None)
 
 if __name__ == "__main__":
     
-    dynamic = False
-    size = (10,5)
+    instance_id="ra01"
+    timesteps=1e5
     
+    dynamic,size = False,(10,5)
     n_agv= 2
-    instance_id="bu01"
-    time_steps=1e5
+    n_tt= 1
     
+    render_mode="human"
+    agent_id=f"{instance_id}-{n_agv}-{n_tt}-{timesteps}"
     
-    agent_id=f"{instance_id}-{n_agv}-{time_steps}"
-    
-    
-    samples = [agent_test(agent_id,instance=instance_id,dynamic=dynamic,size=size,n_agv=n_agv) for _ in range(1)]
+    samples = [agent_test(agent_id,instance=instance_id,dynamic=dynamic,size=size,n_agv=n_agv ,n_tt=n_tt ,render_mode=render_mode) for _ in range(1)]
     print(min(samples),max(samples),sum(samples)/len(samples))
         
         

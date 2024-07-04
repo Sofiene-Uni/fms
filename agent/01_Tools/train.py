@@ -9,13 +9,16 @@ from datetime import datetime
 #tensorboard_log="logs"
 
 
-def train_jssp(instance_id, timesteps=100000,dynamic=False,size=(None,None),n_agv=2):
+def train_jssp(instance_id, timesteps=100000,dynamic=False,size=(None,None),n_agv=2 , n_tt=1 ,render_mode="solution"):
     env = gym.make("ptrl-tools-v0",
-                   render_mode="solution",
+                   render_mode=render_mode,
                    instance_id=instance_id,
                    dynamic=dynamic,
                    size=size,
-                   n_agv=n_agv
+                   n_agv=n_agv,
+                   n_tt=n_tt,
+                  
+                   
     ).unwrapped
     
     
@@ -23,7 +26,7 @@ def train_jssp(instance_id, timesteps=100000,dynamic=False,size=(None,None),n_ag
                         ent_coef=0.01,
                         verbose=1,
                         seed=101,
-                        
+
                         )
 
     start_time = time.time()  
@@ -42,21 +45,23 @@ def train_jssp(instance_id, timesteps=100000,dynamic=False,size=(None,None),n_ag
             info_file.write(f" {current_datetime} -The total {instance_id} training time (seconds): {elapsed_time}\n")
       
     print(f"Training took {elapsed_time} seconds")
-    model.save(f"agents/MaskablePPO-{instance_id}-{n_agv}-{timesteps}.zip")
+    model.save(f"agents/MaskablePPO-{instance_id}-{n_agv}-{n_tt}-{timesteps}.zip")
 
 def main():
     
- 
-    instances= ["bu01","bu02","bu03","bu04","bu05","bu06","bu07","bu08","bu09","bu10"]
-    
-    instances= ["bu01"]
-    timesteps =1e5
-    dynamic=False
-    size=(10,5)
-    agv=2
 
+    
+    instances= ["ra01"]
+    timesteps =1e5
+    dynamic,size=False,(10,5)
+
+    n_agv=2
+    n_tt=1
+    
+    render_mode="solution"
+    
     for instance_id  in reversed (instances) :
-        train_jssp(instance_id, timesteps=timesteps,dynamic=dynamic,size=size ,n_agv=agv)
+        train_jssp(instance_id, timesteps=timesteps,dynamic=dynamic,size=size ,n_agv=n_agv ,n_tt=n_tt ,render_mode=render_mode)
 
 if __name__ == "__main__":
     main()
