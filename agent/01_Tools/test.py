@@ -48,8 +48,8 @@ def agent_test(agent_id="ra01",instance="ra01",dynamic = False ,size=(None,None)
 
 if __name__ == "__main__":
     
-    instance_id="ra01"
-    timesteps=3e5
+    instance_id="ra10"
+    timesteps=1e5
     
     dynamic,size = False,(10,5)
     n_agv= 2

@@ -51,12 +51,12 @@ def main():
     
 
     
-    instances= ["ra01"]
-    timesteps =1e5
+    instances= ["ra01","ra02","ra03","ra04","ra05","ra06","ra07","ra08","ra09","ra10"]
+    timesteps =100
     dynamic,size=False,(10,5)
 
-    n_agv=2
-    n_tt=2
+    n_agv=21
+    n_tt=1
     
     render_mode="solution"
     
