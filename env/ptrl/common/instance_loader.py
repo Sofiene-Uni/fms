@@ -33,7 +33,7 @@ class InstanceLoader:
                 for line in file:
                     elements = line.strip().split()
                     data.append(elements)
-                print(f"{self.benchmark} Instance '{instance_id}' is loaded.")
+                print(f"{self.benchmark} Instance '{instance_id}' ,Layout: '{self.layout}' is loaded.")
         except Exception as e:
             print(f"An error occurred: {str(e)}")
             return None, []

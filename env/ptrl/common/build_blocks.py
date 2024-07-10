@@ -212,8 +212,12 @@ class Transition:
             
             colors_lists = [set(token.color for token in parent.token_container)  for parent in self.parents if parent.type != "f"]
             common_color = set.intersection(*colors_lists)  # find tokens with same colors
+            
+            sibling_tokens = []
+            for parent in self.parents:
+                sibling_tokens.extend(token for token in parent.token_container if token.color in common_color)
                 
-            sibling_tokens = [token for parent in self.parents for token in parent.token_container if token.color in common_color]
+                
             fused_token=sibling_tokens[0]
             
             for parent in self.parents:  # remove fused tokens from parents  
@@ -224,8 +228,10 @@ class Transition:
             return fused_token
         
         
-        if len([parent for parent in self.parents if parent.type != "f"])==1:
-            token= [parent.token_container.pop(0) for parent in self.parents if parent.type != "f"][0] 
+        non_flag = [parent for parent in self.parents if parent.type != "f"]
+    
+        if len(non_flag)==1:
+            token= non_flag[0].token_container.pop(0)
         else:
             token = fuse_tokens() 
           
