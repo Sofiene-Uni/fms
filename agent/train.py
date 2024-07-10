@@ -17,21 +17,22 @@ def train_jssp(instance_id,layout=1,n_agv=1 ,n_tt=0,timesteps=100000,dynamic=Fal
                    size=size,
     ).unwrapped
     
+    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M")
     
+    log_file = f"logs/Log_{instance_id}_{layout}_{n_agv}_{n_tt}_{timesteps}_{current_datetime}.zip"
     model = MaskablePPO("MlpPolicy", env, 
                         ent_coef=0.01,
                         verbose=1,
                         seed=101,
-                        tensorboard_log="logs"
+                        tensorboard_log=log_file
                         )
 
     start_time = time.time()  
     model.learn(total_timesteps=timesteps)
     end_time = time.time()  
     elapsed_time = end_time - start_time  
-    current_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M")
-    
-    
+  
+        
     # Check if the 'info' file exists
     if os.path.exists('0-info.txt'):
         with open('0-info.txt', 'a') as info_file:
@@ -45,17 +46,16 @@ def train_jssp(instance_id,layout=1,n_agv=1 ,n_tt=0,timesteps=100000,dynamic=Fal
 
 def main():
     
-    instances= ["ra01"]
+    instances= ["ra01","ra02","ra03","ra04","ra05","ra06","ra07","ra08","ra09","ra10"]
     layout=1
     n_agv=2
     n_tt=0
     
-    timesteps =1e5
+    timesteps =3e5
     dynamic,size=False,(10,5)
-
     render_mode="solution"
     
-    for instance_id  in reversed (instances) :
+    for instance_id  in  instances :
         train_jssp(instance_id,layout,n_agv=n_agv ,n_tt=n_tt,timesteps=timesteps,dynamic=dynamic,size=size,render_mode=render_mode)
 
 if __name__ == "__main__":
