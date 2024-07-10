@@ -52,6 +52,7 @@ def main():
     
     timesteps =1e5
     dynamic,size=False,(10,5)
+
     render_mode="solution"
     
     for instance_id  in reversed (instances) :
