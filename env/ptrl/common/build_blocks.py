@@ -199,22 +199,22 @@ class Transition:
         
         def get_times(token):
             agv_hist = [parent for parent in self.parents if parent.role == "agv_idle"]
-            tt_hist = [parent for parent in self.parents if parent.role == "tt_idle"]
+            tt_hist = [parent for parent in self.parents if parent.role == "tool_transport_idle"]
             history = next((parent.token_container.pop(0) for parent in self.parents if parent.type == "f"),None )
             if self.role == "job_select":
                 token.time_features[1] = instance.get_time(history.color[1], token.color[1], time_type=1)
                 token.prev_mc = history.color[1]
             elif self.role == "tool_select":
                 token.time_features[2] = instance.get_time(history.color[1], token.color[1], time_type=2)
+                token.prev_tmc = history.color[1]
             elif self.role == "agv_select":
                 if len(agv_hist[0].location_history):
                     token.time_features[3] = instance.get_time(agv_hist[0].location_history[-1], token.prev_mc, time_type=3)
                 else:
                     pass
-            elif self.role == "tt_select":
+            elif self.role == "tool_transport_select":
                 if len(tt_hist[0].location_history):
-                    token.time_features[3] = instance.get_time(tt_hist[0].location_history[-1], token.prev_mc,
-                                                               time_type=4)
+                    token.time_features[4] = instance.get_time(tt_hist[0].location_history[-1], token.prev_tmc, time_type=4)
                 else:
                     pass
             return token
@@ -256,7 +256,7 @@ class Transition:
                 print(parent.label, parent.location_history)
 
         for parent in self.parents:
-            if self.role == "tool_select":
+            if self.role == "tool_transport_select" and parent.role == "tool_transport_idle":
                 parent.location_history.append(token.color[1])
                 print(parent.label, parent.location_history)
 

@@ -249,8 +249,8 @@ def solution_agv_tt(jssp, show_rank=False, format_="jpg", dpi=300):
                  f'{rank}', ha='center', va='center', color='black', fontsize=20)
 
     # Plot TT data
-    tt_bars = ax3.barh(y=tt_etrip_dict["tt_id"], left=tt_etrip_dict["entry_values"],
-                        width=tt_etrip_dict["process_times"], height=0.5, color=tt_colors)
+    tt_empty_bars = ax3.barh(y=tt_etrip_dict["tt_id"], left=tt_etrip_dict["entry_values"],
+                        width=tt_etrip_dict["process_times"], height=0.5, color="grey")
 
     # Add vertical lines for each step
     for step in range(int(jssp.clock) + 1):
