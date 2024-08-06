@@ -4,18 +4,18 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 
 
-def plot_solution(jssp, n_agv,n_tt, show_rank=False, format_="jpg", dpi=300):
+def plot_solution(jssp, n_agv,n_tt, show_rank=False, format_="jpg", dpi=300, filename = '', show=True):
     
     if n_agv >0 and n_tt >0  :
-        solution_agv_tt(jssp, show_rank, format_, dpi)
+        solution_agv_tt(jssp, show_rank, format_, dpi, filename, show)
         
     elif n_agv >0   :
-         solution_agv(jssp, show_rank, format_, dpi) 
+         solution_agv(jssp, show_rank, format_, dpi, filename, show)
     else :
         pass
         
 
-def solution_agv(jssp, show_rank=False, format_="jpg", dpi=300):   
+def solution_agv(jssp, show_rank=False, format_="jpg", dpi=300, filename="", show = True):
     renders_folder = f"{os.getcwd()}\\renders\\"
     if not os.path.exists(renders_folder):
         os.makedirs(renders_folder)
@@ -25,7 +25,10 @@ def solution_agv(jssp, show_rank=False, format_="jpg", dpi=300):
         os.makedirs(solution_folder)
         
     current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-    file_path = f"{solution_folder}/{current_datetime}.{format_}"
+    if filename == "":
+        file_path = os.path.join(solution_folder, f"{current_datetime}.{format_}")
+    else:
+        file_path = os.path.join(solution_folder, f"{filename}.{format_}")
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 10), sharex=True)  
 
@@ -126,7 +129,7 @@ def solution_agv(jssp, show_rank=False, format_="jpg", dpi=300):
     ax2.grid(axis='x')
     
     ax1.set_title(f"AGVs Schedule for instance {jssp.instance_id}  : {jssp.n_jobs} jobs, {jssp.n_machines} machines, {jssp.n_agv} AGV", fontsize=18, fontweight='bold')
-    ax2.set_xlabel(f"Makespan :{jssp.clock} steps" ,fontsize=16)
+    ax2.set_xlabel(f"Makespan :{len(jssp.delivery_history.keys())} steps" ,fontsize=16)
     
     # Create a legend for job numbers and colors below the x-axis with stacked elements
     legend_labels = {job_number: color_map(i) for i, job_number in enumerate(unique_jobs)}
@@ -136,12 +139,13 @@ def solution_agv(jssp, show_rank=False, format_="jpg", dpi=300):
     for text in legend.get_texts():
         text.set_fontsize(16)
   
-    plt.tight_layout()  
-    plt.show() 
+    plt.tight_layout()
+    if show:
+        plt.show()
     fig.savefig(file_path, format=format_, dpi=dpi)
     
     
-def solution_agv_tt(jssp, show_rank=False, format_="jpg", dpi=300):    
+def solution_agv_tt(jssp, show_rank=False, format_="jpg", dpi=300, filename="", show=True):
     
     # Setup folders for saving the plots
     renders_folder = os.path.join(os.getcwd(), "renders")
@@ -151,8 +155,10 @@ def solution_agv_tt(jssp, show_rank=False, format_="jpg", dpi=300):
     os.makedirs(solution_folder, exist_ok=True)
         
     current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-    file_path = os.path.join(solution_folder, f"{current_datetime}.{format_}")
-
+    if filename == "":
+        file_path = os.path.join(solution_folder, f"{current_datetime}.{format_}")
+    else:
+        file_path = os.path.join(solution_folder, f"{filename}.{format_}")
     total_plot_rows = jssp.n_machines+jssp.n_tools+jssp.n_agv+jssp.n_tt
     heights = [(1/total_plot_rows)*val for val in [jssp.n_machines, jssp.n_tools, jssp.n_agv, jssp.n_tt]]
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(22, 10), sharex=True, height_ratios=heights)
@@ -282,7 +288,7 @@ def solution_agv_tt(jssp, show_rank=False, format_="jpg", dpi=300):
 
     # Set title and labels
     ax1.set_title(f"Schedule for {jssp.instance_id}: {jssp.n_jobs} jobs x {jssp.n_machines} machines x {jssp.n_tools} tools, {jssp.n_agv} AGVs, {jssp.n_tt} TTs", fontsize=30, fontweight='bold')
-    ax4.set_xlabel(f"Makespan: {jssp.clock} steps", fontsize=24, loc="right")
+    ax4.set_xlabel(f"Makespan: {len(jssp.delivery_history.keys())} steps", fontsize=24, loc="right")
 
     # Create a legend for job numbers and colors
     legend_patches = [plt.Line2D([0], [0], color=color, lw=5, label=str(job_number)) for job_number, color in job_color_mapping.items()]
@@ -298,7 +304,8 @@ def solution_agv_tt(jssp, show_rank=False, format_="jpg", dpi=300):
         ax.grid(axis='x')
     
     plt.tight_layout()
-    plt.show()
+    if show:
+        plt.show()
     
     fig.savefig(file_path, format=format_, dpi=dpi)
     

@@ -47,7 +47,7 @@ def agent_test(agent_id="ra01",instance="ra01",layout=1,n_agv=2,n_tt=1,dynamic =
 if __name__ == "__main__":
 
     instance_id="ra01"
-    layout=1
+    layout=2
     n_agv= 2
     n_tt= 1
     

@@ -4,7 +4,42 @@ import time
 import gymnasium as gym
 from datetime import datetime
 from sb3_contrib import MaskablePPO
+from stable_baselines3.common.callbacks import BaseCallback
+import numpy as np
+from ptrl.render.plot_fms import plot_solution
 
+class SaveBestModelCallback(BaseCallback):
+    """
+    Callback for saving a model (the check is done every `check_freq` steps).
+    Based on https://stable-baselines3.readthedocs.io/en/master/guide/callbacks.html
+    """
+
+    def __init__(self,verbose=1):
+        super(SaveBestModelCallback, self).__init__(verbose)
+        # self.save_path = save_path
+        self.best_makespan = np.inf
+
+    def _init_callback(self) -> None:
+        # Create folder if needed
+        # if self.save_path is not None:
+        #     os.makedirs(self.save_path, exist_ok=True)
+        pass
+    def _on_step(self) -> bool:
+        # Check that the number of steps taken is a multiple of `check_freq`
+        simulation = self.training_env.envs[0].sim
+        if self.training_env.buf_infos[0]['Terminated']:
+            if self.training_env.buf_infos[0]['Clock'] < self.best_makespan:
+                self.best_makespan = self.training_env.buf_infos[0]['Clock']
+                print(f"Best makespan of {self.best_makespan} achieved at timestep {self.model.num_timesteps}")
+                spec_string = f"{simulation.instance_id}_{simulation.layout}_{simulation.n_agv}_{simulation.n_tt}_{self.model.num_timesteps}"
+                self.model.save(f"agents/Best_Agent_{spec_string}.zip")
+                plot_solution(simulation,
+                              simulation.n_agv,
+                              simulation.n_tt,
+                              filename=f"Best_Solution_{spec_string}",
+                              show = False)
+        # self.model.save(os.path.join(self.save_path, 'best_model'))
+        return True
 
 def train_jssp(instance_id,layout=2,n_agv=2 ,n_tt=1,timesteps=100000,dynamic=False,size=(None,None),render_mode="solution"):
     env = gym.make("ptrl-fms-v0",
@@ -28,7 +63,7 @@ def train_jssp(instance_id,layout=2,n_agv=2 ,n_tt=1,timesteps=100000,dynamic=Fal
                         )
 
     start_time = time.time()  
-    model.learn(total_timesteps=timesteps)
+    model.learn(total_timesteps=timesteps, callback=SaveBestModelCallback())
     end_time = time.time()  
     elapsed_time = end_time - start_time  
   

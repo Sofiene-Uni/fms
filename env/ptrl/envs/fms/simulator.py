@@ -97,7 +97,7 @@ class Simulator(Petri_build):
                   
         self.add_tokens()
         self.refresh_state()
-        
+        # self.delivery_history = {}
 
     def action_mapping(self):
          """
@@ -264,7 +264,8 @@ class Simulator(Petri_build):
             action: Action to be performed.
             screenshot (bool): If True, generates a plot of the Petri net after each interaction (default: False).
         """
-    
+        if self.clock == 0:
+            self.delivery_history = {}
         fired_controlled = self.fire_controlled(action)  
         self.graph.plot_net(fired_controlled) if screenshot else None
 

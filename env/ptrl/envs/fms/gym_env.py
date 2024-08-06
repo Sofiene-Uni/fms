@@ -62,7 +62,7 @@ class FmsEnv(Env):
         """
         self.sim.petri_reset()
         observation = get_obs(self)
-        info = self._get_info(0,False,False)
+        info = self._get_info(0,False,False, self.sim.clock)
 
         return observation, info
 
@@ -121,7 +121,7 @@ class FmsEnv(Env):
         observation = get_obs(self)
         terminated= self.sim.is_terminal()
         reward = self.reward(terminated)
-        info = self._get_info(reward,fired,terminated)
+        info = self._get_info(reward,fired,terminated, self.sim.clock)
         
         return observation, reward, terminated, False, info
 
@@ -148,11 +148,11 @@ class FmsEnv(Env):
         Close the environment.
         """
 
-    def _get_info(self, reward,fired, terminated):
+    def _get_info(self, reward,fired, terminated, clock):
         """
         Get information dictionary.
         """
-        return {"Reward": reward,"Fired":fired ,"Terminated": terminated}
+        return {"Reward": reward,"Fired":fired ,"Terminated": terminated, "Clock":clock}
 
 if __name__ == "__main__":
     

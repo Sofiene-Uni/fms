@@ -41,7 +41,7 @@ class Petri_build:
         self.instance_id = instance_id
         self.instance=InstanceLoader(benchmark=benchmark,instance_id=instance_id,layout=layout) 
         self.n_jobs, self.n_machines, self.n_tools, self.max_bound = self.instance.specs
-         
+        self.layout = layout
         self.n_agv = n_agv
         self.n_tt = n_tt
 
