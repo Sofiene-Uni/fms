@@ -48,7 +48,7 @@ def main():
     
     # instances= ["ra01","ra02","ra03","ra04","ra05","ra06","ra07","ra08","ra09","ra10"]
     instances= ["ra01"]
-    layout=1
+    layout=2
     n_agv=2
     n_tt=1
     

@@ -43,7 +43,8 @@ class FmsEnv(Env):
         self.sim = Simulator(self.instance_id,layout=layout,n_agv=n_agv ,n_tt=n_tt ,dynamic=self.dynamic, size=size)
         self.observation_depth = min(observation_depth, self.sim.n_machines)
    
-        observation_size= 2*self.sim.n_machines +2*self.sim.n_agv+2*self.sim.n_tt+ 2*(self.sim.n_jobs * self.observation_depth) +1
+        # observation_size= 2*self.sim.n_machines +2*self.sim.n_agv+2*self.sim.n_tt+ 2*(self.sim.n_jobs * self.observation_depth) +1
+        observation_size = 3 * self.sim.n_jobs + (self.sim.n_machines + self.sim.n_agv)
         self.observation_space= spaces.Box(low=-1, high=self.sim.max_bound,shape=(observation_size,),dtype=np.int64)
     
     

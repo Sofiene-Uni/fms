@@ -253,12 +253,12 @@ class Transition:
         for parent in self.parents:
             if self.role == "agv_select" and parent.role == "agv_idle":
                 parent.location_history.append(token.color[1])
-                print(parent.label, parent.location_history)
+                # print(parent.label, parent.location_history)
 
         for parent in self.parents:
             if self.role == "tool_transport_select" and parent.role == "tool_transport_idle":
                 parent.location_history.append(token.color[1])
-                print(parent.label, parent.location_history)
+                # print(parent.label, parent.location_history)
 
         for child in self.children:
             token.logging[child.uid] = [clock, 0, 0]

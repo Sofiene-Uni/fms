@@ -1,6 +1,54 @@
 import numpy as np
 
 def get_obs(env):
+    return get_obs_v2(env)
+
+def get_obs_v2(env):
+    """
+    Get the observation of the state.
+
+    Returns:
+        np.ndarray: Observation array.
+    """
+    observation = []
+
+    jobs = [p for p in env.sim.places.values() if p.uid in env.sim.filter_nodes("job")]
+    avgs = [p for p in env.sim.places.values() if p.uid in env.sim.filter_nodes("agv_transporting")]
+    machines = [p for p in env.sim.places.values() if p.uid in env.sim.filter_nodes("machine_processing")]
+    delivery = [p for p in env.sim.places.values() if p.uid in env.sim.filter_nodes("delivery")]
+
+    for job in jobs:
+        total_time = sum(token.time_features[0] for token in job.token_container)
+        total_operations = len([token for token in job.token_container])
+        if total_operations:
+            next_operation = job.token_container[0].time_features[0]
+        else:
+            next_operation = 0
+        observation.extend([total_time, total_operations, next_operation])
+
+    # Get The state of the AGVs , ie ,remaining time :
+    for agv in avgs:
+        if not agv.token_container:
+            observation.extend([0])
+        else:
+            token = agv.token_container[0]
+            elapsed = token.logging[list(token.logging.keys())[-1]][2]
+            remaining_time = token.time_features[1] - elapsed
+            observation.extend([remaining_time if remaining_time >= 0 else 0])
+
+    # Get the state of the machines, i.e., remaining time :
+    for machine in machines:
+        if not machine.token_container:
+            observation.extend([0])
+        else:
+            token = machine.token_container[0]
+            elapsed = token.logging[list(token.logging.keys())[-1]][2]
+            remaining_time = token.time_features[0] - elapsed
+            observation.extend([remaining_time if remaining_time >= 0 else 0])
+
+    return np.array(observation, dtype=np.int64)
+
+def get_obs_v1(env):
     """
     Get the observation of the state.
 
