@@ -50,8 +50,8 @@ class Simulator(Petri_build):
     def __init__(self, 
                  instance_id, 
                  layout=1,
-                 n_agv=1,
-                 n_tt=0,
+                 n_agv=2,
+                 n_tt=1,
                  
                  dynamic=False,
                  size=(None,None),
@@ -194,6 +194,12 @@ class Simulator(Petri_build):
                 
             elif place.role in [ "tool_transporting"]:
                  process_tokens(place, 2)
+
+            elif place.role in ["agv_dead_heading"]:
+                process_tokens(place, 3)
+
+            elif place.role in ["tool_transport_dead_heading"]:
+                process_tokens(place, 4)
                 
 
         self.refresh_state()
@@ -275,9 +281,12 @@ if __name__ == "__main__":
     
     petri = Simulator("ra01") 
     petri.graph.plot_net()
-   
-    
-    
+    places = list(petri.places.values())
+    transitions = list(petri.transitions.values())
+    places.extend(transitions)
+    places.sort(key=lambda x: int(x.uid))
+    for p in places:
+        print(p.uid, p)
  
 
     

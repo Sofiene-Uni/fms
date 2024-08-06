@@ -98,7 +98,9 @@ class InstanceLoader:
                 time_matrix=self.tt_times
         else :      
             time_matrix=self.agv_times
-            
+
+        if origin == destination:   # Same location
+            return 0
         if origin is None:  # Load operation
             trans_time = int(time_matrix.iloc[0][destination + 1])
         elif destination is None:  # Unload operation

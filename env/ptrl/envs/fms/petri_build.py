@@ -173,14 +173,14 @@ class Petri_build:
             
                     self.places[uid].token_container.append(
                         Token(initial_place=uid, color=(job, machine,tool),
-                              time_features=[process_time,None,None] ,    # the rest is added later 
+                              time_features=[process_time,None,None, 0, 0] ,    # the rest is added later
                               rank=i))
                             
                     
                 if self.LU:  # Add unload token
                     self.places[uid].token_container.append(
                         Token(initial_place=uid, color=(job, None ,None ),
-                              time_features=[0,None,0],
+                              time_features=[0,None,0, 0, 0],
                               rank=i + 1,
                               role="u"))
                 
@@ -232,6 +232,8 @@ class Petri_build:
                 ("place", "b", "agv_buffer",  False, False, True, 1),
                 ("trans", "c", "agv_select",  False, False, True, self.n_agv),
                 ("place", "p", "agv_transporting", True, True, True, self.n_agv),
+                ("trans", "a", "agv_start", False, False, True, self.n_agv),
+                ("place", "p", "agv_dead_heading", True, True, True, self.n_agv),
                 ("place", "f", "agv_idle",  True, False, show_flags, self.n_agv),
                 ("trans", "a", "agv_finish",  False, True, True, self.n_agv),
                 ("place", "s", "job_sorting",  False, False, False, 1),  
@@ -242,7 +244,9 @@ class Petri_build:
                 ("job_select", "agv_buffer", "t2p", True),
                 ("agv_buffer", "agv_select", "p2t", True),
                 ("agv_idle", "agv_select", "p2t", False),
-                ("agv_select", "agv_transporting", "t2p", False),
+                ("agv_select", "agv_dead_heading", "t2p", False),
+                ("agv_dead_heading", "agv_start", "p2t", False),
+                ("agv_start", "agv_transporting", "t2p", False),
                 ("agv_transporting", "agv_finish", "p2t", False),
                 ("agv_finish", "agv_idle", "t2p", False),
                 ("agv_finish", "machine_sorting", "t2p", True),
@@ -264,6 +268,8 @@ class Petri_build:
                 ("place", "b", "tool_request_buffer",  True, False, True, 1),
                 ("trans", "c", "tool_transport_select",  False, False, True, self.n_tt),
                 ("place", "b", "tool_transport_buffer",  True, False, True, self.n_tt),
+                ("place", "p", "tool_transport_dead_heading",  True, True, True, self.n_tt),
+                ("trans", "a", "tool_transport_start",  True, False, True, self.n_tt),
                 ("place", "p", "tool_transporting",  True, True, True, self.n_tt),
                 ("trans", "a", "transport_finish",  False, True, True, self.n_tt),
                 ("place", "s", "machine_sorting_T",  False, False, True, 1),
@@ -282,7 +288,9 @@ class Petri_build:
                 ("tool_idle", "tool_select", "p2t", False),
                 ("tool_select", "tool_request_buffer","t2p", True),
                 ("tool_request_buffer","tool_transport_select","p2t", True),
-                ("tool_transport_select",  "tool_transporting", "t2p", False),
+                ("tool_transport_select",  "tool_transport_dead_heading", "t2p", False),
+                ("tool_transport_dead_heading", "tool_transport_start", "p2t", False),
+                ("tool_transport_start", "tool_transporting", "t2p", False),
                 ("transport_finish", "tool_transport_idle", "t2p", False),
                 ("tool_transport_idle", "tool_transport_select", "p2t", False),
                 ("tool_transporting", "transport_finish", "p2t", False),

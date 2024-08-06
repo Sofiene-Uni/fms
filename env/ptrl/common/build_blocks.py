@@ -64,7 +64,7 @@ class Place:
         
         
         self.logging = {None: [0, 0, 0]}
-        
+        self.location_history = [None]
         
 
     def add_arc(self, node, parent=True):
@@ -198,13 +198,25 @@ class Transition:
         """
         
         def get_times(token):
-            
+            agv_hist = [parent for parent in self.parents if parent.role == "agv_idle"]
+            tt_hist = [parent for parent in self.parents if parent.role == "tt_idle"]
             history = next((parent.token_container.pop(0) for parent in self.parents if parent.type == "f"),None )
-            
             if self.role == "job_select":
                 token.time_features[1] = instance.get_time(history.color[1], token.color[1], time_type=1)
+                token.prev_mc = history.color[1]
             elif self.role == "tool_select":
                 token.time_features[2] = instance.get_time(history.color[1], token.color[1], time_type=2)
+            elif self.role == "agv_select":
+                if len(agv_hist[0].location_history):
+                    token.time_features[3] = instance.get_time(agv_hist[0].location_history[-1], token.prev_mc, time_type=3)
+                else:
+                    pass
+            elif self.role == "tt_select":
+                if len(tt_hist[0].location_history):
+                    token.time_features[3] = instance.get_time(tt_hist[0].location_history[-1], token.prev_mc,
+                                                               time_type=4)
+                else:
+                    pass
             return token
         
   
@@ -222,7 +234,8 @@ class Transition:
             
             for parent in self.parents:  # remove fused tokens from parents  
                 parent.token_container = [token for token in parent.token_container if token.color != fused_token.color]  
-                
+                # if parent.role == "agv_idle":
+                #     parent.location_history.append(fused_token.color[1])
             fused_token.logging= {k: v for token in sibling_tokens for k, v in token.logging.items()} # aggregate loggins
             
             return fused_token
@@ -233,15 +246,24 @@ class Transition:
         if len(non_flag)==1:
             token= non_flag[0].token_container.pop(0)
         else:
-            token = fuse_tokens() 
-          
-            
+            token = fuse_tokens()
+
         token = get_times(token)
-        
+
+        for parent in self.parents:
+            if self.role == "agv_select" and parent.role == "agv_idle":
+                parent.location_history.append(token.color[1])
+                print(parent.label, parent.location_history)
+
+        for parent in self.parents:
+            if self.role == "tool_select":
+                parent.location_history.append(token.color[1])
+                print(parent.label, parent.location_history)
+
         for child in self.children:
             token.logging[child.uid] = [clock, 0, 0]
             child.token_container.append(token)
-                
+
 
 class Token:
     """
@@ -256,7 +278,7 @@ class Token:
         logging (dict): Dictionary for logging entry time, leave time, and elapsed time for each place.
     """
 
-    def __init__(self, initial_place="", type_="", role="op",rank=0, color=(None,None,None), time_features=[0,0,0]):
+    def __init__(self, initial_place="", type_="", role="op",rank=0, color=(None,None,None), time_features=[0,0,0, 0, 0]):
         """
         Initialize a token.
 
@@ -268,13 +290,15 @@ class Token:
             rank (int): Order of the operation in the job.
             process_time (int): Time taken for the token's process.
             trans_time (int): Transportation time for the token to move between machines.
+            time_features (list): List of time features for the token (Proc Time, AGV Time, TT Time, AGV Dead Time,
+                                    TT Dead Time).
         """
         self.uid = IdGen.generate_uid()
         self.rank = rank
         self.type = type_
         self.role = role
         self.color = color
-        
+        self.prev_mc = None
         self.time_features=time_features  # 0 :process_time  1:agv_transport 2: tool_transport 
         self.logging = {initial_place: [0, 0, 0]}  # entry time, leave time, elapsed time
         

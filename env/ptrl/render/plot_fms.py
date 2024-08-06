@@ -158,10 +158,12 @@ def solution_agv_tt(jssp, show_rank=False, format_="jpg", dpi=300):
     # Initialize data dictionaries
     jssp_data_dict = {"machine_id": [], "token_rank": [], "entry_values": [], "process_times": [], "jobs": []}
     agv_data_dict = {"agv_id": [], "token_rank": [], "entry_values": [], "process_times": [], "token_role": [], "jobs": []}
+    agv_etrip_dict = {"agv_id": [], "token_rank": [], "entry_values": [], "process_times": [], "empty_trip": [], "token_role": [], "jobs": []}
     tt_data_dict = {"tt_id": [], "token_rank": [], "entry_values": [], "process_times": [], "token_role": [], "jobs": []}
+    tt_etrip_dict = {"tt_id": [], "token_rank": [], "entry_values": [], "process_times": [], "empty_trip": [], "token_role": [], "jobs": []}
 
     # Fill data dictionaries
-    finished_tokens = jssp.delivery_history[list(jssp.delivery_history.keys())[-1]]
+    finished_tokens = list(jssp.delivery_history.values())[-1]
     
     for token in finished_tokens:
         for place, entry in token.logging.items():
@@ -179,6 +181,14 @@ def solution_agv_tt(jssp, show_rank=False, format_="jpg", dpi=300):
                 agv_data_dict["token_role"].append(token.role)
                 agv_data_dict["entry_values"].append(entry[0])
                 agv_data_dict["process_times"].append(entry[2])
+
+            if place in jssp.filter_nodes("agv_dead_heading"):
+                agv_etrip_dict["agv_id"].append(f"AGV {jssp.places[place].color}")
+                agv_etrip_dict["jobs"].append(token.color[0])
+                agv_etrip_dict["token_rank"].append(token.rank)
+                agv_etrip_dict["token_role"].append(token.role)
+                agv_etrip_dict["entry_values"].append(entry[0])
+                agv_etrip_dict["process_times"].append(token.time_features[3])
            
             if place in jssp.filter_nodes("tool_transporting"):
                 tt_data_dict["tt_id"].append(f"TT {jssp.places[place].color}")
@@ -186,7 +196,14 @@ def solution_agv_tt(jssp, show_rank=False, format_="jpg", dpi=300):
                 tt_data_dict["token_rank"].append(token.rank)
                 tt_data_dict["entry_values"].append(entry[0])
                 tt_data_dict["process_times"].append(entry[2])
-    
+
+            if place in jssp.filter_nodes("tool_transport_dead_heading"):
+                tt_etrip_dict["tt_id"].append(f"TT {jssp.places[place].color}")
+                tt_etrip_dict["jobs"].append(token.color[0])
+                tt_etrip_dict["token_rank"].append(token.rank)
+                tt_etrip_dict["entry_values"].append(entry[0])
+                tt_etrip_dict["process_times"].append(token.time_features[4])
+
 
     # Generate colors for jobs
     unique_jobs = list(set(jssp_data_dict["jobs"] + agv_data_dict["jobs"] + tt_data_dict["jobs"]))
@@ -213,14 +230,27 @@ def solution_agv_tt(jssp, show_rank=False, format_="jpg", dpi=300):
         label = 'L' if rank == 0 else ('U' if role == "u" else f'{rank}')
         ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
                  label, ha='center', va='center', color='black', fontsize=20)
-            
+
+    # Plot AGV empty trip data
+    agv_etrip_bars = ax2.barh(y=agv_etrip_dict["agv_id"], left=agv_etrip_dict["entry_values"],
+                        width=agv_etrip_dict["process_times"], height=0.5, color="grey")
+
+    # for bar, rank, role in zip(agv_bars, agv_etrip_dict["token_rank"], agv_etrip_dict["token_role"]):
+    #     label = 'L' if rank == 0 else ('U' if role == "u" else f'{rank}')
+    #     ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2,
+    #              label, ha='center', va='center', color='black', fontsize=20)
+
     # Plot TT data
     tt_bars = ax3.barh(y=tt_data_dict["tt_id"], left=tt_data_dict["entry_values"],
                        width=tt_data_dict["process_times"], height=0.5, color=tt_colors)
     
     for bar, rank in zip(tt_bars, tt_data_dict["token_rank"]):
         ax3.text(bar.get_x() + bar.get_width() / 2, bar.get_y() + bar.get_height() / 2, 
-                 f'{rank}', ha='center', va='center', color='black', fontsize=20)        
+                 f'{rank}', ha='center', va='center', color='black', fontsize=20)
+
+    # Plot TT data
+    tt_bars = ax3.barh(y=tt_etrip_dict["tt_id"], left=tt_etrip_dict["entry_values"],
+                        width=tt_etrip_dict["process_times"], height=0.5, color=tt_colors)
 
     # Add vertical lines for each step
     for step in range(int(jssp.clock) + 1):

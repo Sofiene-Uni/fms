@@ -7,7 +7,7 @@ from sb3_contrib.common.maskable.utils import get_action_masks
 #%% create environement 
 
 
-def agent_test(agent_id="ra01",instance="ra01",layout=1,n_agv=1,n_tt=0,dynamic = False ,size=(None,None) ,render_mode="solution"):
+def agent_test(agent_id="ra01",instance="ra01",layout=1,n_agv=2,n_tt=1,dynamic = False ,size=(None,None) ,render_mode="solution"):
     
     local_agent = f"agents/Agent_{agent_id}.zip"
     global_agent= "agents/Agent.zip"
@@ -46,12 +46,12 @@ def agent_test(agent_id="ra01",instance="ra01",layout=1,n_agv=1,n_tt=0,dynamic =
 
 if __name__ == "__main__":
 
-    instance_id="ra10"
+    instance_id="ra01"
     layout=1
     n_agv= 2
     n_tt= 1
     
-    timesteps=1e5
+    timesteps=3e5
     dynamic,size = False,(10,5)
     render_mode="solution"
     
