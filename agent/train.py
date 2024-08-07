@@ -81,9 +81,9 @@ def train_jssp(instance_id,layout=2,n_agv=2 ,n_tt=1,timesteps=100000,dynamic=Fal
 
 def main():
     
-    # instances= ["ra01","ra02","ra03","ra04","ra05","ra06","ra07","ra08","ra09","ra10"]
-    instances= ["ra01"]
-    layout=2
+    instances= ["ra01","ra02","ra03","ra04","ra05","ra06","ra07","ra08","ra09","ra10"]
+    # instances= ["ra01"]
+    layout=[1,2,3,4]
     n_agv=2
     n_tt=1
     

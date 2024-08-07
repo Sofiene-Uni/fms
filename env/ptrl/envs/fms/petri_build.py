@@ -231,9 +231,9 @@ class Petri_build:
             nodes_layers += [
                 ("place", "b", "agv_buffer",  False, False, True, 1),
                 ("trans", "c", "agv_select",  False, False, True, self.n_agv),
-                ("place", "p", "agv_transporting", True, True, True, self.n_agv),
-                ("trans", "a", "agv_start", False, False, True, self.n_agv),
                 ("place", "p", "agv_dead_heading", True, True, True, self.n_agv),
+                ("trans", "a", "agv_start", False, False, True, self.n_agv),
+                ("place", "p", "agv_transporting", True, True, True, self.n_agv),
                 ("place", "f", "agv_idle",  True, False, show_flags, self.n_agv),
                 ("trans", "a", "agv_finish",  False, True, True, self.n_agv),
                 ("place", "s", "job_sorting",  False, False, False, 1),  

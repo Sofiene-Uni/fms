@@ -87,7 +87,7 @@ class Place:
         Returns:
             str: A string representing the place.
         """
-        return f"Place name: {self.label}, Type: {self.type}, Role: {self.role}, Tokens: {len(self.token_container)}, Color: {self.color}, Parents: {[p.uid for p in self.parents]}, Children: {[c.uid for c in self.children]}, ID: {self.uid}"
+        return f"Place name: {self.label}, Type: {self.type}, Role: {self.role}, Tokens: {len(self.token_container)}, Color: {self.color}, Parents: {[(p.uid, p.label) for p in self.parents]}, Children: {[(c.uid, c.label) for c in self.children]}, ID: {self.uid}"
 
     def tick(self):
         """
@@ -169,16 +169,20 @@ class Transition:
         Returns:
             str: A string representing the transition.
         """
-        return f"Transition name: {self.label}, Type: {self.type}, Role: {self.role}, Color: {self.color}, Parents: {[p.uid for p in self.parents]}, Children: {[c.uid for c in self.children]}, ID: {self.uid}"
+        return f"Transition name: {self.label}, Type: {self.type}, Role: {self.role}, Color: {self.color}, Parents: {[(p.uid, p.label) for p in self.parents]}, Children: {[(c.uid, c.label) for c in self.children]}, ID: {self.uid}"
 
     def check_state(self):
         """
         Check the state of the transition to determine if it is enabled.
         """  
-
+        # if self.role == "agv_select":
+        #     for parent in self.parents:
+        #         if parent.role == "agv_idle" and parent.token_container:
+        #             self.enabled = True
+        #             return True
         colors_lists = [set(token.color for token in parent.token_container)  for parent in self.parents if parent.type != "f"]
         common_found = bool (set.intersection(*colors_lists))
-        
+
         available_tokens =all(parent.token_container for parent in self.parents)
         
         if len([parent for parent in self.parents if parent.type != "f"])==1:
