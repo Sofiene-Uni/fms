@@ -141,26 +141,44 @@ class Simulator(Petri_build):
                     place.token_container.remove(token)
                     #print(f"Token color :{token.color} destroyed in {place.role} - No compatible destination found!")
                         
-                    
+        # def dynamic_agv_sorting(place, color_criterion_index):
+        #     if not  place.token_container:
+        #         return
+        #     for token in place.token_container.copy():
+        #         for transition in place.children:
+        #             if token.color[color_criterion_index] == transition.dynamic_color:
+        #                 transition.fire(self.instance,self.clock)
+        #                 transition.dynamic_color = None
+        #                 break
+
         for place in (p for p in self.places.values() if p.type == "s"):
             if place.role == "job_sorting":
                 process_tokens(place, 0)
-            elif place.role in  ["machine_sorting", "machine_sorting_T"] :
+            elif place.role in  ["machine_sorting", "machine_sorting_T"]:
                 process_tokens(place, 1)
             elif place.role in  ["request_sorting" , "tools_sorting"]:
                 process_tokens(place, 2)
+            elif place.role in ["next_job_sorting"]:
+                process_tokens(place, 0)
+            # elif place.role in ["agv_request_sorting"]:
+            #     dynamic_agv_sorting(place, 3)
+
+            elif place.role in ["agv_request_sorting"]:
+                process_tokens(place, 3)
     
 
     def refresh_state(self):
         """
        Refreshes the state of the Petri net after sorting tokens and checking enabled transitions.
        """
-
+        fired_transitions = []
+        # self.dynamic_agv_colors()
         self.sort_tokens()
+        fired_transitions.extend(self.fire_automatic())
 
         for transition in self.action_map.values(): 
             transition.check_state()
-            
+        return fired_transitions
 
     def fire_timed(self):
         """
@@ -177,11 +195,12 @@ class Simulator(Petri_build):
             
             transition = place.children[0]
             token = place.token_container[0]      
+            # elapsed_time = token.logging[place.label][2]
             elapsed_time = token.logging[place.uid][2]
             
             if elapsed_time >=token.time_features[time_criterion] :
                 transition.fire(self.instance,self.clock)
-                fired_transitions.append(transition.uid)
+                fired_transitions.append(transition.label)
     
 
         for place in (p for p in self.places.values() if p.type == "p"):  
@@ -202,7 +221,7 @@ class Simulator(Petri_build):
                 process_tokens(place, 4)
                 
 
-        self.refresh_state()
+        fired_transitions.extend(self.refresh_state())
         
         self.delivery_history[self.clock] = [
             token for place in self.places.values() if place.type == "d" for token in place.token_container
@@ -239,7 +258,7 @@ class Simulator(Petri_build):
         
         if all(parent.token_container for parent in transition.parents):
             transition.fire(self.instance,self.clock)
-            fire_transitions.append(transition.uid)
+            fire_transitions.append(transition.label)
         
         self.refresh_state()
         self.interaction_counter += 1 
@@ -269,14 +288,45 @@ class Simulator(Petri_build):
         fired_controlled = self.fire_controlled(action)  
         self.graph.plot_net(fired_controlled) if screenshot else None
 
-        while sum(self.action_masks()) == 0:   
-            self.time_tick()
+        places = list(self.places.values())
+        transitions = list(self.transitions.values())
+        places.extend(transitions)
+        places.sort(key=lambda x: int(x.uid))
+        print("controlled", fired_controlled) if len(fired_controlled) else None
+        i = 0
+        while sum(self.action_masks()) == 0:
             fired_timed = self.fire_timed()
             self.graph.plot_net(fired_timed) if screenshot else None
+            self.time_tick()
 
+
+            i += 1
+            # print(i)
             if self.is_terminal():
                break
-           
+            print("timed", fired_timed) if len(fired_timed) else None
+
+    def fire_automatic(self):
+
+        trans_fired = []
+        for trans in [trans for trans in self.transitions.values() if trans.role in ["agv_start"]]:
+            if all(parent.token_container for parent in trans.parents):
+                # print("There")
+                trans.fire(self.instance, self.clock)
+                trans_fired.append(trans.label)
+        return trans_fired
+
+    # def dynamic_agv_colors(self):
+    #
+    #     for place in [place for place in self.places.values() if place.role == "agv_waiting"]:
+    #         if place.token_container:
+    #             dynamic_color = place.token_container[0].color[0]
+    #             place_color = place.color
+    #             for agv_request_sorting in [place for place in self.places.values() if place.role == "agv_request_sorting"]:
+    #                 if agv_request_sorting.color == place_color:
+    #                     agv_request_sorting.dynamic_color = dynamic_color
+    #                     break
+
 
 if __name__ == "__main__":
     

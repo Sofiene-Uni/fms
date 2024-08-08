@@ -61,7 +61,7 @@ class Place:
         self.children = []
         self.token_container = []
         self.show = show
-        
+        self.dynamic_color = None
         
         self.logging = {None: [0, 0, 0]}
         self.location_history = [None]
@@ -95,8 +95,8 @@ class Place:
         """
         if self.token_container:
             for token in self.token_container:  
-                token.logging[self.uid][2]+= 1 
-                
+                # token.logging[self.label][2]+= 1
+                token.logging[self.uid][2] += 1
 
     def error_check(self):
         """
@@ -143,7 +143,7 @@ class Transition:
         self.color = color
         self.timed = timed
         self.enabled = False
-
+        self.dynamic_color = None
         
         self.parents = []
         self.children = []
@@ -200,7 +200,7 @@ class Transition:
         Parameters:
             clock (int): The current simulation clock.
         """
-        
+
         def get_times(token):
             agv_hist = [parent for parent in self.parents if parent.role == "agv_idle"]
             tt_hist = [parent for parent in self.parents if parent.role == "tool_transport_idle"]
@@ -214,6 +214,10 @@ class Transition:
             elif self.role == "agv_select":
                 if len(agv_hist[0].location_history):
                     token.time_features[3] = instance.get_time(agv_hist[0].location_history[-1], token.prev_mc, time_type=3)
+                    agv_color = self.children[0].color
+                    colors = list(token.color)
+                    colors[3] = agv_color
+                    token.color = tuple(colors)
                 else:
                     pass
             elif self.role == "tool_transport_select":
@@ -254,6 +258,9 @@ class Transition:
 
         token = get_times(token)
 
+        if token.color == (1,2,2,1):
+            print("check here")
+
         for parent in self.parents:
             if self.role == "agv_select" and parent.role == "agv_idle":
                 parent.location_history.append(token.color[1])
@@ -265,6 +272,7 @@ class Transition:
                 # print(parent.label, parent.location_history)
 
         for child in self.children:
+            # token.logging[child.label] = [clock, 0, 0]
             token.logging[child.uid] = [clock, 0, 0]
             child.token_container.append(token)
 
@@ -282,7 +290,7 @@ class Token:
         logging (dict): Dictionary for logging entry time, leave time, and elapsed time for each place.
     """
 
-    def __init__(self, initial_place="", type_="", role="op",rank=0, color=(None,None,None), time_features=[0,0,0, 0, 0]):
+    def __init__(self, initial_place="", type_="", role="op",rank=0, color=(None,None,None,None), time_features=[0,0,0, 0, 0]):
         """
         Initialize a token.
 
@@ -305,7 +313,7 @@ class Token:
         self.prev_mc = None
         self.time_features=time_features  # 0 :process_time  1:agv_transport 2: tool_transport 
         self.logging = {initial_place: [0, 0, 0]}  # entry time, leave time, elapsed time
-        
+
  
 
     def __str__(self):
