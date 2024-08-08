@@ -41,7 +41,7 @@ def agent_test(agent_id="ra01",instance="ra01",layout=1,n_agv=2,n_tt=1,dynamic =
     
     print(f" inference took {elapsed_time} seconds") 
     print(f" Makespan : {env.sim.clock} , number of interactions {env.sim.interaction_counter}")
-    # print(env.sim.delivery_history())
+
     return env.sim.clock
 
 if __name__ == "__main__":
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     agent_id=f"{instance_id}_{layout}_{n_agv}_{n_tt}_{timesteps}"
     samples = [agent_test(agent_id,instance=instance_id,dynamic=dynamic,size=size,n_agv=n_agv ,n_tt=n_tt ,render_mode=render_mode) for _ in range(1)]
     print(min(samples),max(samples),sum(samples)/len(samples))
-
+        
         
         
         
