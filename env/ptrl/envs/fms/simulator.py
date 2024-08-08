@@ -145,10 +145,14 @@ class Simulator(Petri_build):
         for place in (p for p in self.places.values() if p.type == "s"):
             if place.role == "job_sorting":
                 process_tokens(place, 0)
-            elif place.role in  ["machine_sorting", "machine_sorting_T"] :
+            elif place.role in  ["machine_sorting", "machine_sorting_T"]:
                 process_tokens(place, 1)
             elif place.role in  ["request_sorting" , "tools_sorting"]:
                 process_tokens(place, 2)
+            elif place.role in ["next_job_sorting"]:
+                process_tokens(place, 0)
+            elif place.role in ["agv_request_sorting"]:
+                process_tokens(place, 3)
     
 
     def refresh_state(self):
@@ -157,6 +161,7 @@ class Simulator(Petri_build):
        """
 
         self.sort_tokens()
+        self.fire_automatic()
 
         for transition in self.action_map.values(): 
             transition.check_state()
@@ -177,6 +182,7 @@ class Simulator(Petri_build):
             
             transition = place.children[0]
             token = place.token_container[0]      
+            # elapsed_time = token.logging[place.label][2]
             elapsed_time = token.logging[place.uid][2]
             
             if elapsed_time >=token.time_features[time_criterion] :
@@ -268,15 +274,24 @@ class Simulator(Petri_build):
             self.delivery_history = {}
         fired_controlled = self.fire_controlled(action)  
         self.graph.plot_net(fired_controlled) if screenshot else None
-
+        i = 0
         while sum(self.action_masks()) == 0:   
             self.time_tick()
             fired_timed = self.fire_timed()
             self.graph.plot_net(fired_timed) if screenshot else None
-
+            i += 1
+            print(i)
             if self.is_terminal():
                break
-           
+
+    def fire_automatic(self):
+
+        for trans in [trans for trans in self.transitions.values() if trans.role in ["agv_start"]]:
+            if all(parent.token_container for parent in trans.parents):
+                print("There")
+                trans.fire(self.instance, self.clock)
+
+
 
 if __name__ == "__main__":
     

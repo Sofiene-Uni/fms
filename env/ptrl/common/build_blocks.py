@@ -95,8 +95,8 @@ class Place:
         """
         if self.token_container:
             for token in self.token_container:  
-                token.logging[self.uid][2]+= 1 
-                
+                # token.logging[self.label][2]+= 1
+                token.logging[self.uid][2] += 1
 
     def error_check(self):
         """
@@ -214,6 +214,10 @@ class Transition:
             elif self.role == "agv_select":
                 if len(agv_hist[0].location_history):
                     token.time_features[3] = instance.get_time(agv_hist[0].location_history[-1], token.prev_mc, time_type=3)
+                    agv_color = self.children[0].color
+                    colors = list(token.color)
+                    colors[3] = agv_color
+                    token.color = tuple(colors)
                 else:
                     pass
             elif self.role == "tool_transport_select":
@@ -265,6 +269,7 @@ class Transition:
                 # print(parent.label, parent.location_history)
 
         for child in self.children:
+            # token.logging[child.label] = [clock, 0, 0]
             token.logging[child.uid] = [clock, 0, 0]
             child.token_container.append(token)
 
@@ -282,7 +287,7 @@ class Token:
         logging (dict): Dictionary for logging entry time, leave time, and elapsed time for each place.
     """
 
-    def __init__(self, initial_place="", type_="", role="op",rank=0, color=(None,None,None), time_features=[0,0,0, 0, 0]):
+    def __init__(self, initial_place="", type_="", role="op",rank=0, color=(None,None,None,None), time_features=[0,0,0, 0, 0]):
         """
         Initialize a token.
 

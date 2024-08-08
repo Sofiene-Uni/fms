@@ -172,14 +172,14 @@ class Petri_build:
                 for i, (machine,tool, process_time) in enumerate(self.instance.job_sequences[job]):
             
                     self.places[uid].token_container.append(
-                        Token(initial_place=uid, color=(job, machine,tool),
+                        Token(initial_place=uid, color=(job, machine,tool, None),
                               time_features=[process_time,None,None, 0, 0] ,    # the rest is added later
                               rank=i))
                             
                     
                 if self.LU:  # Add unload token
                     self.places[uid].token_container.append(
-                        Token(initial_place=uid, color=(job, None ,None ),
+                        Token(initial_place=uid, color=(job, None ,None, None ),
                               time_features=[0,None,0, 0, 0],
                               rank=i + 1,
                               role="u"))
@@ -229,30 +229,48 @@ class Petri_build:
         
         if self.n_agv > 0 :
             nodes_layers += [
+                ("place", 'f', "next_job_prep", True, False, show_flags, self.n_jobs),
                 ("place", "b", "agv_buffer",  False, False, True, 1),
                 ("trans", "c", "agv_select",  False, False, True, self.n_agv),
                 ("place", "p", "agv_dead_heading", True, True, True, self.n_agv),
+                ("trans", "a", "agv_wait", True, False, True, self.n_agv),
+                ("place", "b", "agv_waiting", True, False, True, self.n_agv),
                 ("trans", "a", "agv_start", False, False, True, self.n_agv),
                 ("place", "p", "agv_transporting", True, True, True, self.n_agv),
                 ("place", "f", "agv_idle",  True, False, show_flags, self.n_agv),
                 ("trans", "a", "agv_finish",  False, True, True, self.n_agv),
+                ("place", "s", "next_job_sorting", False, False, True, 1),
+                ("trans", "a", "next_job_sort", True, False, True, self.n_jobs),
+                ("place", "s", "agv_request_sorting", False, False, False, 1),
+                ("trans", "a", "agv_request_sort", True, False, True, self.n_agv),
+                ("place", "f", "next_job_ready", True, False, show_flags, self.n_agv),
                 ("place", "s", "job_sorting",  False, False, False, 1),  
-                ("trans", "a", "job_sort",  True, False, show_flags, self.n_jobs),
+                ("trans", "a", "job_sort",  True, False, show_flags, self.n_agv),
                 ]
             layers_to_connect += [
-                
+                ("next_job_prep", "job_select", "p2t", False),
                 ("job_select", "agv_buffer", "t2p", True),
                 ("agv_buffer", "agv_select", "p2t", True),
                 ("agv_idle", "agv_select", "p2t", False),
                 ("agv_select", "agv_dead_heading", "t2p", False),
-                ("agv_dead_heading", "agv_start", "p2t", False),
+                ("agv_dead_heading", "agv_wait", "p2t", False),
+                ("agv_wait", "agv_waiting", "t2p", False),
+                ("agv_waiting", "agv_start", "p2t", False),
                 ("agv_start", "agv_transporting", "t2p", False),
                 ("agv_transporting", "agv_finish", "p2t", False),
                 ("agv_finish", "agv_idle", "t2p", False),
+                ("agv_finish", "next_job_sorting", "t2p", True),
+                ("next_job_sorting", "next_job_sort", "p2t", True),
+                ("next_job_sort", "next_job_prep", "t2p", False),
                 ("agv_finish", "machine_sorting", "t2p", True),
-                ("job_sorting", "job_sort", "p2t", True),
-                ("job_sort", "job_idle", "t2p", False),
+                ("agv_finish", "agv_request_sorting", "t2p", True),
+                ("agv_request_sorting", "agv_request_sort", "p2t", True),
+                ("agv_request_sort", "next_job_ready", "t2p", False),
+                ("next_job_ready", "agv_start", "p2t", False),
+                # ("job_sorting", "job_sort", "p2t", True),
+                # ("job_sort", "agv_start", "t2p", False),
                 ]
+            layers_to_connect.remove(("job_idle", "job_select", "p2t", False))
         else :
             layers_to_connect += [("job_select", "machine_sorting", "t2p", True)]
                 
