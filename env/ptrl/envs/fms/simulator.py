@@ -1,5 +1,6 @@
 from ptrl.envs.fms.petri_build import Petri_build
 from ptrl.render.graph import  Graph
+from ptrl.common.build_blocks import Token
 
 
 class Simulator(Petri_build):
@@ -117,7 +118,7 @@ class Simulator(Petri_build):
             bool: True if the terminal state is reached, False otherwise.
         """
         # all places are empty except delivery and flages
-        process_places=  [p for p in self.places.values() if p.type  not in ["d","f"] ]
+        process_places=  [p for p in self.places.values() if p.type  not in ["d","f"] and p.role not in ["agv_request_sorting"] ]
         empty_process = all(len(p.token_container) == 0 for p in process_places)
         return empty_process
            
@@ -141,15 +142,22 @@ class Simulator(Petri_build):
                     place.token_container.remove(token)
                     #print(f"Token color :{token.color} destroyed in {place.role} - No compatible destination found!")
                         
-        # def dynamic_agv_sorting(place, color_criterion_index):
-        #     if not  place.token_container:
-        #         return
-        #     for token in place.token_container.copy():
-        #         for transition in place.children:
-        #             if token.color[color_criterion_index] == transition.dynamic_color:
-        #                 transition.fire(self.instance,self.clock)
-        #                 transition.dynamic_color = None
-        #                 break
+        def dynamic_agv_sorting(place, color_criterion_index):
+            if not  place.token_container:
+                return
+            for token in place.token_container.copy():
+                for transition in place.children:
+                    if token.color[color_criterion_index] == transition.dynamic_color:
+                        # if token.color == (2,2,0,0):
+                        #     print(self.clock)
+                        if token.color[0] == 3:
+                            print("problem")
+                        for child in transition.children:
+                            child.token_container.append(token)
+                        transition.dynamic_color = -1
+                        place.token_container.remove(token)
+                        break
+
 
         for place in (p for p in self.places.values() if p.type == "s"):
             if place.role == "job_sorting":
@@ -160,11 +168,11 @@ class Simulator(Petri_build):
                 process_tokens(place, 2)
             elif place.role in ["next_job_sorting"]:
                 process_tokens(place, 0)
-            # elif place.role in ["agv_request_sorting"]:
-            #     dynamic_agv_sorting(place, 3)
-
             elif place.role in ["agv_request_sorting"]:
-                process_tokens(place, 3)
+                dynamic_agv_sorting(place, 0)
+
+            # elif place.role in ["agv_request_sorting"]:
+            #     process_tokens(place, 3)
     
 
     def refresh_state(self):
@@ -172,7 +180,7 @@ class Simulator(Petri_build):
        Refreshes the state of the Petri net after sorting tokens and checking enabled transitions.
        """
         fired_transitions = []
-        # self.dynamic_agv_colors()
+        self.dynamic_agv_colors()
         self.sort_tokens()
         fired_transitions.extend(self.fire_automatic())
 
@@ -293,15 +301,15 @@ class Simulator(Petri_build):
         places.extend(transitions)
         places.sort(key=lambda x: int(x.uid))
         print("controlled", fired_controlled) if len(fired_controlled) else None
-        i = 0
+        # i = 0
         while sum(self.action_masks()) == 0:
+            self.time_tick()
             fired_timed = self.fire_timed()
             self.graph.plot_net(fired_timed) if screenshot else None
-            self.time_tick()
 
 
-            i += 1
-            # print(i)
+            # i += 1
+            # print(self.clock)
             if self.is_terminal():
                break
             print("timed", fired_timed) if len(fired_timed) else None
@@ -309,23 +317,37 @@ class Simulator(Petri_build):
     def fire_automatic(self):
 
         trans_fired = []
+        waiting_tokens = []
         for trans in [trans for trans in self.transitions.values() if trans.role in ["agv_start"]]:
+        #     waiting_place = [parent for parent in trans.parents if parent.role == 'agv_waiting'][0]
+        #     if len (waiting_place.token_container) and waiting_place.token_container[0].rank == 0:
+        #         trans.fire(self.instance, self.clock)
+        #         trans_fired.append(trans.label)
+        #     else:
+        #         ready_jobs = [parent for parent in trans.parents if parent.role == "next_job_ready"][0]
+        #         if len(ready_jobs.token_container) and waiting_place.token_container[0].color[0] == ready_jobs.token_container[0].color[0]:
+        #             trans.fire(self.instance, self.clock)
+        #             trans_fired.append(trans.label)
             if all(parent.token_container for parent in trans.parents):
                 # print("There")
                 trans.fire(self.instance, self.clock)
                 trans_fired.append(trans.label)
         return trans_fired
 
-    # def dynamic_agv_colors(self):
-    #
-    #     for place in [place for place in self.places.values() if place.role == "agv_waiting"]:
-    #         if place.token_container:
-    #             dynamic_color = place.token_container[0].color[0]
-    #             place_color = place.color
-    #             for agv_request_sorting in [place for place in self.places.values() if place.role == "agv_request_sorting"]:
-    #                 if agv_request_sorting.color == place_color:
-    #                     agv_request_sorting.dynamic_color = dynamic_color
-    #                     break
+    def dynamic_agv_colors(self):
+
+        agv_waiting_places = [place for place in self.places.values() if place.role == "agv_waiting"]
+        agv_request_sort_transitions = [place for place in self.transitions.values() if place.role == "agv_request_sort"]
+        for i, place in enumerate(agv_waiting_places):
+            if not len(place.token_container):
+                continue
+            if place.token_container[0].color == (3,3,2,0):
+                print("There also")
+            if place.token_container[0].rank == 0:
+                agv_request_sort_transitions[i].children[0].token_container.append(Token())
+            elif agv_request_sort_transitions[i].color == place.color:
+                agv_request_sort_transitions[i].dynamic_color = place.token_container[0].color[0]
+
 
 
 if __name__ == "__main__":

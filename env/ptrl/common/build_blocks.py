@@ -258,8 +258,8 @@ class Transition:
 
         token = get_times(token)
 
-        if token.color == (1,2,2,1):
-            print("check here")
+        # if token.color == (1,2,2,1):
+        #     print("check here")
 
         for parent in self.parents:
             if self.role == "agv_select" and parent.role == "agv_idle":

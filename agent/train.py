@@ -87,7 +87,7 @@ def main():
     n_agv=2
     n_tt=1
     
-    timesteps =3e5
+    timesteps =10000
     dynamic,size=False,(10,5)
     render_mode="solution"
 
