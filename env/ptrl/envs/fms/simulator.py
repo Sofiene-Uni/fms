@@ -154,6 +154,7 @@ class Simulator(Petri_build):
                             print("problem")
                         for child in transition.children:
                             child.token_container.append(token)
+                            token.logging[child.uid] = [self.clock, 0, 0]
                         transition.dynamic_color = -1
                         place.token_container.remove(token)
                         break
@@ -301,14 +302,12 @@ class Simulator(Petri_build):
         places.extend(transitions)
         places.sort(key=lambda x: int(x.uid))
         print("controlled", fired_controlled) if len(fired_controlled) else None
-        # i = 0
+        i = 0
         while sum(self.action_masks()) == 0:
             self.time_tick()
             fired_timed = self.fire_timed()
             self.graph.plot_net(fired_timed) if screenshot else None
-
-
-            # i += 1
+            i += 1
             # print(self.clock)
             if self.is_terminal():
                break
@@ -319,19 +318,28 @@ class Simulator(Petri_build):
         trans_fired = []
         waiting_tokens = []
         for trans in [trans for trans in self.transitions.values() if trans.role in ["agv_start"]]:
-        #     waiting_place = [parent for parent in trans.parents if parent.role == 'agv_waiting'][0]
-        #     if len (waiting_place.token_container) and waiting_place.token_container[0].rank == 0:
-        #         trans.fire(self.instance, self.clock)
-        #         trans_fired.append(trans.label)
-        #     else:
-        #         ready_jobs = [parent for parent in trans.parents if parent.role == "next_job_ready"][0]
-        #         if len(ready_jobs.token_container) and waiting_place.token_container[0].color[0] == ready_jobs.token_container[0].color[0]:
-        #             trans.fire(self.instance, self.clock)
-        #             trans_fired.append(trans.label)
-            if all(parent.token_container for parent in trans.parents):
-                # print("There")
+            waiting_place = [parent for parent in trans.parents if parent.role == 'agv_waiting'][0]
+            if len (waiting_place.token_container) and waiting_place.token_container[0].rank == 0:
                 trans.fire(self.instance, self.clock)
                 trans_fired.append(trans.label)
+
+            else:
+                ready_jobs = [parent for parent in trans.parents if parent.role == "next_job_ready"][0]
+                if len(ready_jobs.token_container) and len(waiting_place.token_container):
+                    waiting_job = waiting_place.token_container[0]
+                    prev_jobs =  [token for token in ready_jobs.token_container if token.color[0] == waiting_job.color[0]]
+                    prev_ready_job = [token for token in prev_jobs if waiting_job.rank - token.rank == 1]
+                    if len(prev_ready_job):
+                        for child in trans.children:
+                            child.token_container.append(waiting_job)
+                            waiting_job.logging[child.uid] = [self.clock, 0, 0]
+                        trans_fired.append(trans.label)
+                        ready_jobs.token_container.remove(prev_ready_job[0])
+                        waiting_place.token_container.remove(waiting_job)
+            # if all(parent.token_container for parent in trans.parents):
+            #     # print("There")
+            #     trans.fire(self.instance, self.clock)
+            #     trans_fired.append(trans.label)
         return trans_fired
 
     def dynamic_agv_colors(self):
