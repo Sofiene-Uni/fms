@@ -150,8 +150,8 @@ class Simulator(Petri_build):
                     if token.color[color_criterion_index] == transition.dynamic_color:
                         # if token.color == (2,2,0,0):
                         #     print(self.clock)
-                        if token.color[0] == 3:
-                            print("problem")
+                        # if token.color[0] == 3:
+                        #     print("problem")
                         for child in transition.children:
                             child.token_container.append(token)
                             token.logging[child.uid] = [self.clock, 0, 0]
@@ -294,29 +294,30 @@ class Simulator(Petri_build):
         """
         if self.clock == 0:
             self.delivery_history = {}
-        fired_controlled = self.fire_controlled(action)  
+        fired_controlled = self.fire_controlled(action)
         self.graph.plot_net(fired_controlled) if screenshot else None
 
-        places = list(self.places.values())
-        transitions = list(self.transitions.values())
-        places.extend(transitions)
-        places.sort(key=lambda x: int(x.uid))
-        print("controlled", fired_controlled) if len(fired_controlled) else None
-        i = 0
+        # places = list(self.places.values())
+        # transitions = list(self.transitions.values())
+        # places.extend(transitions)
+        # places.sort(key=lambda x: int(x.uid))
+        # print("controlled", fired_controlled) if len(fired_controlled) else None
+        # i = 0
+        self.skip_invalid_journeys()
         while sum(self.action_masks()) == 0:
             self.time_tick()
             fired_timed = self.fire_timed()
             self.graph.plot_net(fired_timed) if screenshot else None
-            i += 1
+            # i += 1
             # print(self.clock)
             if self.is_terminal():
-               break
-            print("timed", fired_timed) if len(fired_timed) else None
+                break
+            # print("timed", fired_timed) if len(fired_timed) else None
 
     def fire_automatic(self):
 
         trans_fired = []
-        waiting_tokens = []
+
         for trans in [trans for trans in self.transitions.values() if trans.role in ["agv_start"]]:
             waiting_place = [parent for parent in trans.parents if parent.role == 'agv_waiting'][0]
             if len (waiting_place.token_container) and waiting_place.token_container[0].rank == 0:
@@ -336,10 +337,7 @@ class Simulator(Petri_build):
                         trans_fired.append(trans.label)
                         ready_jobs.token_container.remove(prev_ready_job[0])
                         waiting_place.token_container.remove(waiting_job)
-            # if all(parent.token_container for parent in trans.parents):
-            #     # print("There")
-            #     trans.fire(self.instance, self.clock)
-            #     trans_fired.append(trans.label)
+
         return trans_fired
 
     def dynamic_agv_colors(self):
@@ -349,13 +347,60 @@ class Simulator(Petri_build):
         for i, place in enumerate(agv_waiting_places):
             if not len(place.token_container):
                 continue
-            if place.token_container[0].color == (3,3,2,0):
-                print("There also")
+            # if place.token_container[0].color == (3,3,2,0):
+                # print("There also")
             if place.token_container[0].rank == 0:
                 agv_request_sort_transitions[i].children[0].token_container.append(Token())
             elif agv_request_sort_transitions[i].color == place.color:
                 agv_request_sort_transitions[i].dynamic_color = place.token_container[0].color[0]
 
+    def skip_invalid_journeys(self):
+        for place in self.places.values():
+            if place.role == "agv_dead_heading":
+                for token in place.token_container:
+                    if token.time_features[3] == 0:
+                        place.token_container.remove(token)
+                        for agv in [agv for agv in self.places.values() if agv.role == "agv_waiting"]:
+                            if agv.color == place.color:
+                                agv.token_container.append(token)
+                                token.logging[agv.uid] = [self.clock, 0, 0]
+                                break
+            elif place.role == "agv_transporting":
+                for token in place.token_container:
+                    if token.time_features[1] == 0:
+                        place.token_container.remove(token)
+                        for destinations in [place for place in self.places.values() if place.role in ["agv_idle", "machine_sorting"]]:
+                            if destinations.color == place.color:
+                                destinations.token_container.append(token)
+                                token.logging[destinations.uid] = [self.clock, 0, 0]
+                                break
+                            elif destinations.color is None:
+                                destinations.token_container.append(token)
+                                token.logging[destinations.uid] = [self.clock, 0, 0]
+                                break
+            # if place.role == "tool_transport_dead_heading":
+            #     for token in place.token_container:
+            #         if token.time_features[4] == 0:
+            #             place.token_container.remove(token)
+            #             for tt in [tt for tt in self.places.values() if tt.role == "tool_transport_waiting"]:
+            #                 if agv.color == place.color:
+            #                     agv.token_container.append(token)
+            #                     token.logging[agv.uid] = [self.clock, 0, 0]
+            #                     break
+            # elif place.role == "tool_transporting":
+            #     for token in place.token_container:
+            #         if token.time_features[1] == 0:
+            #             place.token_container.remove(token)
+            #             for destinations in [place for place in self.places.values() if place.role in ["agv_idle", "machine_sorting"]]:
+            #                 if destinations.color == place.color:
+            #                     destinations.token_container.append(token)
+            #                     token.logging[destinations.uid] = [self.clock, 0, 0]
+            #                     break
+            #                 elif destinations.color is None:
+            #                     destinations.token_container.append(token)
+            #                     token.logging[destinations.uid] = [self.clock, 0, 0]
+            #                     break
+            #
 
 
 if __name__ == "__main__":

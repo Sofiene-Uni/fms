@@ -200,7 +200,6 @@ class Transition:
         Parameters:
             clock (int): The current simulation clock.
         """
-
         def get_times(token):
             agv_hist = [parent for parent in self.parents if parent.role == "agv_idle"]
             tt_hist = [parent for parent in self.parents if parent.role == "tool_transport_idle"]
@@ -213,16 +212,22 @@ class Transition:
                 token.prev_tmc = history.color[1]
             elif self.role == "agv_select":
                 if len(agv_hist[0].location_history):
-                    token.time_features[3] = instance.get_time(agv_hist[0].location_history[-1], token.prev_mc, time_type=3)
-                    agv_color = self.children[0].color
-                    colors = list(token.color)
-                    colors[3] = agv_color
-                    token.color = tuple(colors)
+                    if token.time_features[1] == 0:
+                        token.time_features[3] = 0
+                    else:
+                        token.time_features[3] = instance.get_time(agv_hist[0].location_history[-1], token.prev_mc, time_type=3)
+                        agv_color = self.children[0].color
+                        colors = list(token.color)
+                        colors[3] = agv_color
+                        token.color = tuple(colors)
                 else:
                     pass
             elif self.role == "tool_transport_select":
                 if len(tt_hist[0].location_history):
-                    token.time_features[4] = instance.get_time(tt_hist[0].location_history[-1], token.prev_tmc, time_type=4)
+                    if token.time_features[2] == 0:
+                        token.time_features[4] = 0
+                    else:
+                        token.time_features[4] = instance.get_time(tt_hist[0].location_history[-1], token.prev_tmc, time_type=2)
                 else:
                     pass
             return token

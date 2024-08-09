@@ -296,17 +296,15 @@ def solution_agv_tt(jssp, show_rank=False, format_="jpg", dpi=300, filename="", 
     
     for text in legend.get_texts():
         text.set_fontsize(24)
-        
+
+    plt.tight_layout()
+    if show:
+        plt.show()
     # Configure plot aesthetics
     for ax in [ax1, ax2, ax3, ax4]:
         ax.tick_params(axis='y', labelsize=24)
         ax.tick_params(axis='x', labelsize=24)
         ax.grid(axis='x')
-    
-    plt.tight_layout()
-    if show:
-        plt.show()
-    
     fig.savefig(file_path, format=format_, dpi=dpi)
     
     
