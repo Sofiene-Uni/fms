@@ -31,8 +31,8 @@ class SaveBestModelCallback(BaseCallback):
             if self.training_env.buf_infos[0]['Clock'] < self.best_makespan:
                 self.best_makespan = self.training_env.buf_infos[0]['Clock']
                 print(f"Best makespan of {self.best_makespan} achieved at timestep {self.model.num_timesteps}")
-                spec_string = f"{simulation.instance_id}_{simulation.layout}_{simulation.n_agv}_{simulation.n_tt}_{self.model.num_timesteps}"
-                self.model.save(f"agents/Best_Agent_{spec_string}.zip")
+                spec_string = f"{simulation.instance_id}_{simulation.layout}_{simulation.n_agv}_{simulation.n_tt}"
+                self.model.save(f"agents/Best_Agent_{spec_string}_{self.model.num_timesteps}.zip")
                 plot_solution(simulation,
                               simulation.n_agv,
                               simulation.n_tt,
@@ -81,13 +81,13 @@ def train_jssp(instance_id,layout=2,n_agv=2 ,n_tt=1,timesteps=100000,dynamic=Fal
 
 def main():
     
-    # instances= ["ra01","ra02","ra03","ra04","ra05","ra06","ra07","ra08","ra09","ra10"]
-    instances= ["ra05"]
-    layouts=[2]
+    instances= ["ra01","ra02","ra03","ra04","ra05","ra06","ra07","ra08","ra09","ra10"]
+    # instances= ["ra05"]
+    layouts=[1,2,3,4]
     n_agv=2
     n_tt=1
     
-    timesteps =100000
+    timesteps =500000
     dynamic,size=False,(10,5)
     render_mode="solution"
 

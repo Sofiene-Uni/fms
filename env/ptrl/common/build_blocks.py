@@ -215,7 +215,7 @@ class Transition:
                     if token.time_features[1] == 0:
                         token.time_features[3] = 0
                     else:
-                        token.time_features[3] = instance.get_time(agv_hist[0].location_history[-1], token.prev_mc, time_type=3)
+                        token.time_features[3] = instance.get_time(agv_hist[0].location_history[-1], token.prev_mc, time_type=1)
                         agv_color = self.children[0].color
                         colors = list(token.color)
                         colors[3] = agv_color
@@ -267,12 +267,12 @@ class Transition:
         #     print("check here")
 
         for parent in self.parents:
-            if self.role == "agv_select" and parent.role == "agv_idle":
+            if self.role == "agv_select" and parent.role == "agv_idle" and token.time_features[1]:
                 parent.location_history.append(token.color[1])
                 # print(parent.label, parent.location_history)
 
         for parent in self.parents:
-            if self.role == "tool_transport_select" and parent.role == "tool_transport_idle":
+            if self.role == "tool_transport_select" and parent.role == "tool_transport_idle" and token.time_features[2]:
                 parent.location_history.append(token.color[1])
                 # print(parent.label, parent.location_history)
 

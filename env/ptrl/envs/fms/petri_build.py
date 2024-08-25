@@ -177,12 +177,12 @@ class Petri_build:
                               rank=i))
                             
                     
-                if self.LU:  # Add unload token
-                    self.places[uid].token_container.append(
-                        Token(initial_place=uid, color=(job, None ,None, None ),
-                              time_features=[0,None,0, 0, 0],
-                              rank=i + 1,
-                              role="u"))
+                # if self.LU:  # Add unload token
+                #     self.places[uid].token_container.append(
+                #         Token(initial_place=uid, color=(job, None ,None, None ),
+                #               time_features=[0,None,0, 0, 0],
+                #               rank=i + 1,
+                #               role="u"))
                 
             except:
                 pass
@@ -282,14 +282,14 @@ class Petri_build:
                 ("place", "b", "tool_request",  True, False, True, self.n_tools),
                 ("place", "f", "tool_idle",  True, False, show_flags, self.n_tools),
                 ("trans", "c", "tool_select",  False, False, True, self.n_tools),
-                ("place", "f", "tool_transport_idle",  False, False, show_flags, self.n_tt),
+                ("place", "f", "tool_transport_idle",  True, False, show_flags, self.n_tt),
                 ("place", "b", "tool_request_buffer",  True, False, True, 1),
-                ("trans", "c", "tool_transport_select",  False, False, True, self.n_tt),
+                ("trans", "c", "tool_transport_select",  True, False, True, self.n_tt),
                 ("place", "b", "tool_transport_buffer",  True, False, True, self.n_tt),
                 ("place", "p", "tool_transport_dead_heading",  True, True, True, self.n_tt),
                 ("trans", "a", "tool_transport_start",  True, False, True, self.n_tt),
                 ("place", "p", "tool_transporting",  True, True, True, self.n_tt),
-                ("trans", "a", "transport_finish",  False, True, True, self.n_tt),
+                ("trans", "a", "transport_finish",  True, True, True, self.n_tt),
                 ("place", "s", "machine_sorting_T",  False, False, True, 1),
                 ("trans", "a", "machine_sort_T",  True, False, True, self.n_machines),
                 ("place", "b", "machine_buffer_T",  True, False, True, self.n_machines),

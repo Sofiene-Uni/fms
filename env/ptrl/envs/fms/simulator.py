@@ -95,7 +95,7 @@ class Simulator(Petri_build):
         self.clock = 0
         for place in self.places.values():
             place.token_container = []
-                  
+            place.location_history = []
         self.add_tokens()
         self.refresh_state()
         # self.delivery_history = {}
@@ -123,7 +123,7 @@ class Simulator(Petri_build):
         return empty_process
            
   
-    def sort_tokens(self): 
+    def sort_tokens(self):
         """
         Sorts tokens in sorting places based on their roles: 
             0: job, 1: machine, 2 :tools).
@@ -131,8 +131,8 @@ class Simulator(Petri_build):
         """
         def process_tokens(place, color_criterion_index):
             if not  place.token_container:
-                return 
-            
+                return
+
             for token in place.token_container.copy():
                 for transition in place.children:
                     if token.color[color_criterion_index] == transition.color:
@@ -141,7 +141,10 @@ class Simulator(Petri_build):
                 else:
                     place.token_container.remove(token)
                     #print(f"Token color :{token.color} destroyed in {place.role} - No compatible destination found!")
-                        
+            # if place.role in ["tools_sorting"]:
+            #     print("Tools sorted")
+            #     print([[token.color for token in place.token_container] for place in self.places.values() if
+            #            place.role in ["tool_idle"]])
         def dynamic_agv_sorting(place, color_criterion_index):
             if not  place.token_container:
                 return
@@ -167,11 +170,11 @@ class Simulator(Petri_build):
                 process_tokens(place, 1)
             elif place.role in  ["request_sorting" , "tools_sorting"]:
                 process_tokens(place, 2)
+
             elif place.role in ["next_job_sorting"]:
                 process_tokens(place, 0)
             elif place.role in ["agv_request_sorting"]:
                 dynamic_agv_sorting(place, 0)
-
             # elif place.role in ["agv_request_sorting"]:
             #     process_tokens(place, 3)
     
@@ -296,23 +299,25 @@ class Simulator(Petri_build):
             self.delivery_history = {}
         fired_controlled = self.fire_controlled(action)
         self.graph.plot_net(fired_controlled) if screenshot else None
+        # print([[token.color for token in place.token_container] for place in self.places.values() if
+        #        place.role in ["tool_idle"]])
 
         # places = list(self.places.values())
         # transitions = list(self.transitions.values())
         # places.extend(transitions)
         # places.sort(key=lambda x: int(x.uid))
-        # print("controlled", fired_controlled) if len(fired_controlled) else None
-        # i = 0
+        # print("controlled", fired_controlled, self.clock) if len(fired_controlled) else None
         self.skip_invalid_journeys()
         while sum(self.action_masks()) == 0:
             self.time_tick()
             fired_timed = self.fire_timed()
+            # print("timed", fired_timed, self.clock) if len(fired_timed) else None
+            # print([[token.color for token in place.token_container] for place in self.places.values() if place.role in ["tool_idle"]])
             self.graph.plot_net(fired_timed) if screenshot else None
             # i += 1
             # print(self.clock)
             if self.is_terminal():
                 break
-            # print("timed", fired_timed) if len(fired_timed) else None
 
     def fire_automatic(self):
 
@@ -337,6 +342,12 @@ class Simulator(Petri_build):
                         trans_fired.append(trans.label)
                         ready_jobs.token_container.remove(prev_ready_job[0])
                         waiting_place.token_container.remove(waiting_job)
+
+        # for trans in [trans for trans in self.transitions.values() if trans.role in ["tool_transport_start"]]:
+        #     waiting_place = [parent for parent in trans.parents if parent.role == 'tool_transport_dead_heading'][0]
+        #     if len (waiting_place.token_container) and waiting_place.token_container[0].rank == 0:
+        #         trans.fire(self.instance, self.clock)
+        #         trans_fired.append(trans.label)
 
         return trans_fired
 
@@ -373,40 +384,40 @@ class Simulator(Petri_build):
                             if destinations.color == place.color:
                                 destinations.token_container.append(token)
                                 token.logging[destinations.uid] = [self.clock, 0, 0]
-                                break
+                                # break
                             elif destinations.color is None:
                                 destinations.token_container.append(token)
                                 token.logging[destinations.uid] = [self.clock, 0, 0]
                                 break
-            # if place.role == "tool_transport_dead_heading":
-            #     for token in place.token_container:
-            #         if token.time_features[4] == 0:
-            #             place.token_container.remove(token)
-            #             for tt in [tt for tt in self.places.values() if tt.role == "tool_transport_waiting"]:
-            #                 if agv.color == place.color:
-            #                     agv.token_container.append(token)
-            #                     token.logging[agv.uid] = [self.clock, 0, 0]
-            #                     break
-            # elif place.role == "tool_transporting":
-            #     for token in place.token_container:
-            #         if token.time_features[1] == 0:
-            #             place.token_container.remove(token)
-            #             for destinations in [place for place in self.places.values() if place.role in ["agv_idle", "machine_sorting"]]:
-            #                 if destinations.color == place.color:
-            #                     destinations.token_container.append(token)
-            #                     token.logging[destinations.uid] = [self.clock, 0, 0]
-            #                     break
-            #                 elif destinations.color is None:
-            #                     destinations.token_container.append(token)
-            #                     token.logging[destinations.uid] = [self.clock, 0, 0]
-            #                     break
+            if place.role == "tool_transport_dead_heading":
+                for token in place.token_container:
+                    if token.time_features[4] == 0:
+                        place.token_container.remove(token)
+                        for tt in [tt for tt in self.places.values() if tt.role == "tool_transporting"]:
+                            if tt.color == place.color:
+                                tt.token_container.append(token)
+                                token.logging[tt.uid] = [self.clock, 0, 0]
+                    break
+            elif place.role == "tool_transporting":
+                for token in place.token_container:
+                    if token.time_features[2] == 0:
+                        place.token_container.remove(token)
+                        for destinations in [place for place in self.places.values() if place.role in ["tool_transport_idle", "machine_sorting_T"]]:
+                            if destinations.color == place.color:
+                                destinations.token_container.append(token)
+                                token.logging[destinations.uid] = [self.clock, 0, 0]
+                                # break
+                            elif destinations.color is None:
+                                destinations.token_container.append(token)
+                                token.logging[destinations.uid] = [self.clock, 0, 0]
+                    break
             #
 
 
 if __name__ == "__main__":
     
     petri = Simulator("ra01") 
-    petri.graph.plot_net()
+    # petri.graph.plot_net()
     places = list(petri.places.values())
     transitions = list(petri.transitions.values())
     places.extend(transitions)
